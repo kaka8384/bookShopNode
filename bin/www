@@ -7,7 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('bookshopapi:server');
 var http = require('http');
-let systemConfig = require('../../system.config');
+let systemConfig = require('../system.config');
 
 /**
  * Get port from environment and store in Express.

@@ -1,11 +1,8 @@
-/**
- * Created by wyf on 2017/1/13.
- */
 let mongoose =  require('mongoose');
 let Schema = mongoose.Schema;
 
 let categorySchema = new Schema({
-    name: String,
+    name: { type: String, required: true,unique:true,trim:true },
     updated: { type: Date, default: Date.now }
 });
 

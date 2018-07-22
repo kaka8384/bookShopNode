@@ -3,8 +3,9 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-let systemConfig = require('../system.config');
-mongoose.connect(systemConfig.mongooseConnect, { useMongoClient: true });
+let systemConfig = require('./system.config');
+var mongoose = require('mongoose');
+mongoose.connect(systemConfig.mongooseConnect,{ useNewUrlParser: true });
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -41,7 +42,7 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.send('error');
+  res.send('error:'+err);
 });
 
 module.exports = app;
