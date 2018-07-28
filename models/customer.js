@@ -4,12 +4,13 @@ let Schema = mongoose.Schema;
 let customerSchema = new Schema({
     username: { type: String, required: true,unique:true,trim:true },
     password:{ type: String, required: true },
-    mobile:{ type: String, required: true ,unique:true,maxlength:11},
+    mobile:{ type: String, maxlength:11},
     nickname:{ type: String, trim:true }, //昵称
     gender:String,  //性别
     headImg:String, //头像
     brithDay:Date,  //生日
-    mail:String,    //邮箱
+    mail:String,    //邮箱,
+    isActive:{type: Boolean, default:true },  //是否可用
     updated: { type: Date, default: Date.now }
 });
 
