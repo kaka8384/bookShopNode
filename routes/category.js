@@ -63,7 +63,6 @@ router.put('/UpdateCatgeory/:categoryId', function(req, res, next) {
 
 //查询所有分类
 router.get('/AllCatgeory', function(req, res, next) {
-
     Category.find({}, (err, catgeories)=> {
         if(err){
             res.send({
@@ -81,7 +80,6 @@ router.get('/AllCatgeory', function(req, res, next) {
 
 //分页查询分类
 router.get('/CatgeoryByPage', function(req, res, next) {
-
     let {page, categoryName}=req.query;
     let limit = constants.PAGE_SIZE;
     let skip = (page - 1) * limit;

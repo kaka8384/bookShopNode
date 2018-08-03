@@ -15,7 +15,7 @@ var usersRouter = require('./routes/users');
 var productRouter = require('./routes/product');
 var categoryRouter = require('./routes/category');
 var customerRouter = require('./routes/customer');
-
+var shoppingCatRouter = require('./routes/shoppingCat');
 var app = express();
 
 // view engine setup
@@ -31,7 +31,7 @@ app.use(session({
   secret: 'account system', 
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 600000, httpOnly:false, secure:false },
+  cookie: { secure: false, maxAge: 1800000, httpOnly:false, secure:false },  
   store: new MongoStore({ mongooseConnection: mongoose.connection })
 }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -43,7 +43,7 @@ app.use('/api', usersRouter);
 app.use('/api',productRouter);
 app.use('/api',categoryRouter);
 app.use('/api',customerRouter);
-
+app.use('/api',shoppingCatRouter);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
