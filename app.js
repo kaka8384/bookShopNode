@@ -8,7 +8,9 @@ let systemConfig = require('./system.config');
 let session = require('express-session');
 let MongoStore = require('connect-mongo')(session);
 var mongoose = require('mongoose');
+var bluebird = require('bluebird');
 mongoose.connect(systemConfig.mongooseConnect,{ useNewUrlParser: true });
+mongoose.Promise=bluebird;
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -17,6 +19,7 @@ var categoryRouter = require('./routes/category');
 var customerRouter = require('./routes/customer');
 var shoppingCatRouter = require('./routes/shoppingCat');
 var orderRouter = require('./routes/order');
+var product_commentRouter = require('./routes/product_comment');
 var app = express();
 
 // view engine setup
@@ -46,6 +49,7 @@ app.use('/api',categoryRouter);
 app.use('/api',customerRouter);
 app.use('/api',shoppingCatRouter);
 app.use('/api',orderRouter);
+app.use('/api',product_commentRouter);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

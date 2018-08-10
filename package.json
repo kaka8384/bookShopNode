@@ -10,6 +10,7 @@
     "url": "git+https://github.com/kaka8384/bookShopNode.git"
   },
   "dependencies": {
+    "bluebird": "^3.5.1",
     "body-parser": "^1.18.3",
     "connect-mongo": "^2.0.1",
     "cookie-parser": "~1.4.3",

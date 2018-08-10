@@ -77,16 +77,13 @@ router.get('/ProductByPage', function(req, res, next) {
     }
     if(minPrice)
     {
-        Object.assign(queryCondition,{"price":{$gt:minPrice}});
+        Object.assign(queryCondition,{"price":{$gte:minPrice}});
     }
     if(maxPrice)
     {
-        Object.assign(queryCondition,{"price":{$lt:maxPrice}});
+        Object.assign(queryCondition,{"price":{$lte:maxPrice}});
     }
-    if(isActive)
-    {
-        queryCondition['isActive'] = isActive;
-    }
+    queryCondition['isActive'] = isActive;
     if(sort)
     {
         switch(sort)
@@ -116,7 +113,7 @@ router.get('/ProductByPage', function(req, res, next) {
             break;
         }
     }
-    Product.count(queryCondition, (err, count)=>{
+    Product.countDocuments(queryCondition, (err, count)=>{
         Product.find(queryCondition)
             .sort(sortCondition)
             .limit(limit)

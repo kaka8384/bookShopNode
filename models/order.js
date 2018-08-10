@@ -6,7 +6,8 @@ var productSchema = new Schema({
     name:{ type: String, required: true,trim:true }, //商品名称，
     img:String, //商品图片
     price:{ type: Schema.Types.Decimal128, required: true}, //商品价格
-    buyCount:{ type: Number, default: 1,min:1} //购买数
+    buyCount:{ type: Number, default: 1,min:1}, //购买数
+    isEvaluate:{ type: Boolean, default: false}, //是否已评价
 }, {_id: false});
 
 var statusSchema = new Schema({
@@ -25,7 +26,7 @@ let orderSchema = new Schema({
     orderStatus:[statusSchema],   //订单状态
     consignee:{ type: String, required: true,trim:true }, //收货人,
     memo:{ type: String, trim:true }, //备注,
-    isDelete: { type: Boolean, default: false}, //是否删除
+    isDelete: { type: Boolean, default: false}, //是否删除（用户管理中不显示)
     updated: { type: Date, default: Date.now}
 });
 
