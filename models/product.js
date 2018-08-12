@@ -13,10 +13,10 @@ let productSchema = new Schema({
         publicationTime:{ type: Date, required: true,index:true}, //出版时间
         ISBN:String
     },
-    inventory:{ type: Number, required: true},  //库存
-    salesCount:{ type: Number, default: 0,index:true} , //销量
-    collectCount:{ type: Number, default: 0}, //收藏数
-    commentCount:{ type: Number, default: 0,index:true} , //评论数
+    inventory:{ type: Number, required: true,min:0},  //库存
+    salesCount:{ type: Number, default: 0,index:true,min:0} , //销量
+    collectCount:{ type: Number, default: 0,min:0}, //收藏数
+    commentCount:{ type: Number, default: 0,index:true,min:0} , //评论数
     isActive:{ type: Boolean, default: true},   //是否上架
     updated: { type: Date, default: Date.now}
 });

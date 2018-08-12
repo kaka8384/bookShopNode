@@ -8,8 +8,8 @@ let commentSchema = new Schema({
     orderId: { type: Schema.Types.ObjectId, required: true}, //订单ID
     commentCotent: { type: String, required: true,maxlength:200}, //评论内容
     commentStar: { type: Number, required: true}, //评论星级
-    likenum:{ type: Number,default:0}, //点赞数
-    notlikenum:{ type: Number,default:0}, //不认可数
+    likenum:{ type: Number,default:0,min:0}, //点赞数
+    notlikenum:{ type: Number,default:0,min:0}, //不认可数
     updated: { type: Date, default: Date.now}
 });
 
