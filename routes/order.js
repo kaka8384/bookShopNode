@@ -5,6 +5,7 @@ let Sequence=require('../models/Sequence');
 let moment=require('moment');
 let constants=require('../constants/constants');
 let utils=require('../utils/utils');
+let auth=require('../utils/auth');
 
 //得出订单编号的追加序号
 function _getSequence(sequenceType)
@@ -32,72 +33,101 @@ function _getSequence(sequenceType)
 
 //生成订单
 router.post('/CreateOrder', function(req, res, next) {
-    let order = req.body;
-    var sequenceType='Order_Sequence_'+moment().format('YYYYMMDD'); 
-    var sequenceResult=_getSequence(sequenceType); //获取生成订单需要的序号
-    sequenceResult.then(function(promiseData){
-      order.orderNumber=utils.getOrderNumber(promiseData.sequenceNum.toString()); //订单编号
-      var newModel=new Order(order);
-      newModel.orderStatus.push({status:1});  //订单状态设置为已提交
-      newModel.save((err, order)=>{
-          if(err){
-              res.send({
-                  success: false,
-                  error: err
-              });
-          }else {
-              res.send({
-                  success: true,
-                  order: order
-              });
-          }
-      });
-    })
-    .error(function(error){console.log(error)});
-
+    if(!auth.isAuth(req))
+    {
+        res.send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        let order = req.body;
+        var sequenceType='Order_Sequence_'+moment().format('YYYYMMDD'); 
+        var sequenceResult=_getSequence(sequenceType); //获取生成订单需要的序号
+        sequenceResult.then(function(promiseData){
+          order.orderNumber=utils.getOrderNumber(promiseData.sequenceNum.toString()); //订单编号
+          var newModel=new Order(order);
+          newModel.orderStatus.push({status:1});  //订单状态设置为已提交
+          newModel.save((err, order)=>{
+              if(err){
+                  res.send({
+                      success: false,
+                      error: err
+                  });
+              }else {
+                  res.send({
+                      success: true,
+                      order: order
+                  });
+              }
+          });
+        })
+        .error(function(error){console.log(error)});
+    }
 });
 
 //修改订单状态
 router.put('/UpdateOrder/:orderId', function(req, res, next) {
-    let orderId = req.params.orderId;
-    let status = req.body.status;
-    var update={$set:{"updated":moment().format()}};
-    if(status)
+    if(!auth.isAuth(req)&&!auth.isAdminAuth(req))
     {
-        Object.assign(update,{$push:{"orderStatus":{"status":status}}}); //修改订单状态
+        res.send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
     }
-    Order.findOneAndUpdate({_id:orderId}, update, {new: true}, (err, order)=>{
-        if(err){
-            res.send({
-                success: false,
-                error: err
-            });
-        }else {
-            res.send({
-                success: true,
-                order: order
-            });
+    else
+    {
+        let orderId = req.params.orderId;
+        let status = req.body.status;
+        var update={$set:{"updated":moment().format()}};
+        if(status)
+        {
+            Object.assign(update,{$push:{"orderStatus":{"status":status}}}); //修改订单状态
         }
-    });
+        Order.findOneAndUpdate({_id:orderId}, update, {new: true}, (err, order)=>{
+            if(err){
+                res.send({
+                    success: false,
+                    error: err
+                });
+            }else {
+                res.send({
+                    success: true,
+                    order: order
+                });
+            }
+        });
+    }
 });
 
 //删除订单
 router.put('/DeleteOrder/:orderId', function(req, res, next) {
-    let orderId = req.params.orderId;
-    var update={$set:{"updated":moment().format(),"isDelete":true}};
-    Order.findOneAndUpdate({_id:orderId}, update, {new: true}, (err, order)=>{
-        if(err){
-            res.send({
-                success: false,
-                error: err
-            });
-        }else {
-            res.send({
-                success: true,
-                order: order
-            });
-        }
-    });
+    if(!auth.isAuth(req))
+    {
+        res.send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        let orderId = req.params.orderId;
+        var update={$set:{"updated":moment().format(),"isDelete":true}};
+        Order.findOneAndUpdate({_id:orderId}, update, {new: true}, (err, order)=>{
+            if(err){
+                res.send({
+                    success: false,
+                    error: err
+                });
+            }else {
+                res.send({
+                    success: true,
+                    order: order
+                });
+            }
+        });
+    }
 });
 
 //分页订单查询

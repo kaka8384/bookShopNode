@@ -6,6 +6,7 @@ let md5=require("md5");
 let constants=require('../constants/constants');
 let errorcodes=require('../constants/errorCodes');
 let utils=require('../utils/utils');
+let auth=require('../utils/auth');
 
 //网站用户注册
 router.post('/CustomerRegister', function(req, res, next) {
@@ -100,17 +101,8 @@ router.post('/CustomerLogin',function (req, res, next) {
 //网站用户退出
 router.post('/CustomerLogout',function (req, res, next) {
 	let currentUser = req.session.userInfo;
-	// console.log('logout'+JSON.stringify(currentUser));
 	if(currentUser && currentUser._id){
-		//销毁session
-		req.session.destroy(function(err) {
-			res.send({
-				success: true,
-				userInfo:{
-					username: currentUser['username']
-				}
-			});
-		});
+        delete req.session.userInfo;
 	}else {
 		res.send({
 			isAuth: false
@@ -120,66 +112,86 @@ router.post('/CustomerLogout',function (req, res, next) {
 
 //网站用户信息修改
 router.put('/UpdateCustomer/:customerId', function(req, res, next) {
-    let customerId = req.params.customerId;
-    let customer = req.body;
-    if(customer.password)
+    if(!auth.isAuth(req))
     {
-        customer.password=md5(customer.password);  //修改密码
+        res.send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
     }
-    customer.updated=moment().format();
-    let newCustomer = Object.assign({}, customer);
-    Customer.findOneAndUpdate({_id:customerId}, newCustomer, {new: true}, (err, customer)=>{
-        if(err){
-            res.send({
-                success: false,
-                error: err
-            });
-        }
-        else if(customer==null)
+    else
+    {
+        let customerId = req.params.customerId;
+        let customer = req.body;
+        if(customer.password)
         {
-            res.send({
-                success: false,
-                code: errorcodes.USERNAME_NOTEXIST 
-            });
+            customer.password=md5(customer.password);  //修改密码
         }
-        else {
-            res.send({
-                success: true,
-                customer: customer
-            });
-        }
-    });
+        customer.updated=moment().format();
+        let newCustomer = Object.assign({}, customer);
+        Customer.findOneAndUpdate({_id:customerId}, newCustomer, {new: true}, (err, customer)=>{
+            if(err){
+                res.send({
+                    success: false,
+                    error: err
+                });
+            }
+            else if(customer==null)
+            {
+                res.send({
+                    success: false,
+                    code: errorcodes.USERNAME_NOTEXIST 
+                });
+            }
+            else {
+                res.send({
+                    success: true,
+                    customer: customer
+                });
+            }
+        });
+    }
 });
 
 
 //网站用户注销(禁用)
 router.put('/CancelCustomer/:customerId', function(req, res, next) {
-    let customerId = req.params.customerId;
-    let customer = req.body;
-    customer.updated=moment().format();
-    customer.isActive=false; //禁用用户
-    let newCustomer = Object.assign({}, customer);
-    Customer.findOneAndUpdate({_id:customerId}, newCustomer, {new: true}, (err, customer)=>{
-        if(err){
-            res.send({
-                success: false,
-                error: err
-            });
-        }
-        else if(customer==null)
-        {
-            res.send({
-                success: false,
-                code: errorcodes.USERNAME_NOTEXIST 
-            });
-        }
-        else {
-            res.send({
-                success: true,
-                customer: customer
-            });
-        }
-    });
+    if(!auth.isAdminAuth(req))
+    {
+        res.send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        let customerId = req.params.customerId;
+        let customer = req.body;
+        customer.updated=moment().format();
+        customer.isActive=false; //禁用用户
+        let newCustomer = Object.assign({}, customer);
+        Customer.findOneAndUpdate({_id:customerId}, newCustomer, {new: true}, (err, customer)=>{
+            if(err){
+                res.send({
+                    success: false,
+                    error: err
+                });
+            }
+            else if(customer==null)
+            {
+                res.send({
+                    success: false,
+                    code: errorcodes.USERNAME_NOTEXIST 
+                });
+            }
+            else {
+                res.send({
+                    success: true,
+                    customer: customer
+                });
+            }
+        });
+    }
 });
 
 //网站用户分页查询

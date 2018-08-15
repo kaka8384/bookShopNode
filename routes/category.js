@@ -3,62 +3,94 @@ var router = express.Router();
 let Category=require('../models/category');
 let moment=require('moment');
 let constants=require('../constants/constants');
+let auth=require('../utils/auth');
+let errorcodes=require('../constants/errorCodes');
 
 //添加分类
 router.post('/AddCatgeory', function(req, res, next) {
-    let category = req.body;
-    var newModel=new Category(category);
-    newModel.save((err, category)=>{
-        if(err){
-            res.send({
-                success: false,
-                error: err
-            });
-        }else {
-            res.send({
-                success: true,
-                category: category
-            });
-        }
-    });
+    if(!auth.isAdminAuth(req))
+    {
+        res.send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        let category = req.body;
+        var newModel=new Category(category);
+        newModel.save((err, category)=>{
+            if(err){
+                res.send({
+                    success: false,
+                    error: err
+                });
+            }else {
+                res.send({
+                    success: true,
+                    category: category
+                });
+            }
+        });
+    }
 });
 
 //删除分类
 router.delete('/DeleteCatgeory/:categoryId', function(req, res, next) {
-    let categoryId = req.params.categoryId;
-    Category.remove({_id: categoryId}, (err)=>{
-        if (err) {
-            res.send({
-                success: false,
-                error: err
-            });
-        } else {
-            res.send({
-                success: true
-            });
-        }
-    });
+    if(!auth.isAdminAuth(req))
+    {
+        res.send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        let categoryId = req.params.categoryId;
+        Category.remove({_id: categoryId}, (err)=>{
+            if (err) {
+                res.send({
+                    success: false,
+                    error: err
+                });
+            } else {
+                res.send({
+                    success: true
+                });
+            }
+        });
+    }
 });
 
 //修改分类
 router.put('/UpdateCatgeory/:categoryId', function(req, res, next) {
-    let categoryId = req.params.categoryId;
-    let category = req.body;
-    category.updated=moment().format();
-    let newCatgeory = Object.assign({}, category);
-    Category.findOneAndUpdate({_id:categoryId}, newCatgeory, {new: true}, (err, category)=>{
-        if(err){
-            res.send({
-                success: false,
-                error: err
-            });
-        }else {
-            res.send({
-                success: true,
-                category: category
-            });
-        }
-    });
+    if(!auth.isAdminAuth(req))
+    {
+        res.send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        let categoryId = req.params.categoryId;
+        let category = req.body;
+        category.updated=moment().format();
+        let newCatgeory = Object.assign({}, category);
+        Category.findOneAndUpdate({_id:categoryId}, newCatgeory, {new: true}, (err, category)=>{
+            if(err){
+                res.send({
+                    success: false,
+                    error: err
+                });
+            }else {
+                res.send({
+                    success: true,
+                    category: category
+                });
+            }
+        });
+    }
 });
 
 //查询所有分类

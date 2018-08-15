@@ -1,6 +1,7 @@
 let mongoose =  require('mongoose');
 let Schema = mongoose.Schema;
 
+
 //商品评论
 let commentSchema = new Schema({
     productId: { type: Schema.Types.ObjectId, required: true}, //商品ID
@@ -8,8 +9,8 @@ let commentSchema = new Schema({
     orderId: { type: Schema.Types.ObjectId, required: true}, //订单ID
     commentCotent: { type: String, required: true,maxlength:200}, //评论内容
     commentStar: { type: Number, required: true}, //评论星级
-    likenum:{ type: Number,default:0,min:0}, //点赞数
-    notlikenum:{ type: Number,default:0,min:0}, //不认可数
+    likeCustomers:[Schema.Types.ObjectId], //点赞客户
+    notlikeCustomers:[Schema.Types.ObjectId], //不认可客户
     updated: { type: Date, default: Date.now}
 });
 

@@ -10,4 +10,6 @@ ErrorCode.SHOPPINGCAT_NOTEXIST=10005; //用户的购物车不存在
 ErrorCode.SHOPPINGCAT_PRODUCT_NOTEXIST=10006; //购物车中的商品不存在
 ErrorCode.NO_DATA_PERMISSION=10007; //没有操作数据的权限
 ErrorCode.COMMENT_NOTEXIST=10008; //评论不存在
+ErrorCode.ISSUE_NOTEXIST=10009; //问题不存在
+ErrorCode.NO_LOGIN=10010;  //用户未登录
 module.exports =ErrorCode;
