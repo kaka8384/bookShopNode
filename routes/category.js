@@ -112,35 +112,45 @@ router.get('/AllCatgeory', function(req, res, next) {
 
 //分页查询分类
 router.get('/CatgeoryByPage', function(req, res, next) {
-    let {page, categoryName}=req.query;
-    let limit = constants.PAGE_SIZE;
-    let skip = (page - 1) * limit;
-    let queryCondition = {};
-    if(categoryName){
-        queryCondition['name'] = new RegExp(categoryName);
+    if(!auth.isAdminAuth(req))
+    {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
     }
-    Category.count(queryCondition, (err, count)=>{
-        Category.find(queryCondition)
-            .limit(limit)
-            .skip(skip)
-            .exec((err, catgeories)=>{
-                if(err){
-                    res.send({
-                        success: false,
-                        error: err
-                    });
-                }else {
-                    res.send({
-                        success: true,
-                        catgeories: catgeories,
-                        page: {
-                            total: count,
-                            current: page
-                        }
-                    });
-                }
-            });
-    });
+    else
+    {
+        let {page, name}=req.query;
+        let limit = constants.PAGE_SIZE;
+        let skip = (page - 1) * limit;
+        let queryCondition = {};
+        if(name){
+            queryCondition['name'] = new RegExp(name);
+        }
+        Category.countDocuments(queryCondition, (err, count)=>{
+            Category.find(queryCondition)
+                .limit(limit)
+                .skip(skip)
+                .exec((err, catgeories)=>{
+                    if(err){
+                        res.send({
+                            success: false,
+                            error: err
+                        });
+                    }else {
+                        res.send({
+                            success: true,
+                            list: catgeories,
+                            pagination: {
+                                total: count,
+                                current: page
+                            }
+                        });
+                    }
+                });
+        });
+    }   
 });
 
 module.exports = router;

@@ -239,8 +239,8 @@ router.get('/CustomerByPage', function(req, res, next) {
                 }else {
                     res.send({
                         success: true,
-                        customers: customers,
-                        page: {
+                        list: customers,
+                        pagination: {
                             total: count,
                             current: page
                         }

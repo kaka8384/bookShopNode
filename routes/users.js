@@ -61,6 +61,7 @@ router.post('/UserLogin',function (req, res, next) {
           //管理员不存在
           res.send({
               success: false,
+              status:"error",
               code: errorcodes.USERNAME_NOTEXIST 
           });
       }else {
@@ -74,6 +75,7 @@ router.post('/UserLogin',function (req, res, next) {
               };
               res.send({
                   success: true,
+                  status:"ok",
                   adminInfo:{
                       username: adminInfo['username'],
                       authToken:authToken,
@@ -202,8 +204,8 @@ router.get('/UsersByPage', function(req, res, next) {
               }else {
                   res.send({
                       success: true,
-                      users: users,
-                      page: {
+                      list: users,
+                      pagination: {
                           total: count,
                           current: page
                       }

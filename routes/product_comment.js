@@ -219,8 +219,8 @@ router.get('/Product_CommentByPage', function(req, res, next) {
                 }else {
                     res.send({
                         success: true,
-                        comment: comment,
-                        page: {
+                        list: comment,
+                        pagination: {
                             total: count,
                             current: page
                         }

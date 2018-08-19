@@ -200,8 +200,8 @@ router.get('/Product_IssueByPage', function(req, res, next) {
                 }else {
                     res.send({
                         success: true,
-                        issue: issue,
-                        page: {
+                        list: issue,
+                        pagination: {
                             total: count,
                             current: page
                         }

@@ -157,8 +157,8 @@ router.get('/ProductByPage', function(req, res, next) {
                 }else {
                     res.send({
                         success: true,
-                        products: products,
-                        page: {
+                        list: products,
+                        pagination: {
                             total: count,
                             current: page
                         }
