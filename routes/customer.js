@@ -196,9 +196,9 @@ router.put('/CancelCustomer/:customerId', function(req, res, next) {
 
 //网站用户分页查询
 router.get('/CustomerByPage', function(req, res, next) {
-    let {page,username,mobile,nickname,gender,brithDayStart,brithDayEnd,rowCount,isActive}=req.query;
-    let limit = rowCount?rowCount:constants.PAGE_SIZE;
-    let skip = (page - 1) * limit;
+    let {currentPage,username,mobile,nickname,gender,brithDayStart,brithDayEnd,pageSize,isActive}=req.query;
+    let limit = pageSize?paseInt(pageSize):constants.PAGE_SIZE;
+    let skip = (currentPage - 1) * limit;
     let queryCondition = {}; 
     // let sortCondition = {};
     if(username){
@@ -242,7 +242,7 @@ router.get('/CustomerByPage', function(req, res, next) {
                         list: customers,
                         pagination: {
                             total: count,
-                            current: page
+                            current: paseInt(currentPage)
                         }
                     });
                 }

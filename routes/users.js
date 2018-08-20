@@ -12,7 +12,7 @@ let auth=require('../utils/auth');
 router.post('/AddUser', function(req, res, next) {
   if(!auth.isAdminAuth(req))
   {
-      res.send({
+      res.status(401).send({
           success: false,
           code: errorcodes.NO_LOGIN
       });
@@ -61,7 +61,6 @@ router.post('/UserLogin',function (req, res, next) {
           //管理员不存在
           res.send({
               success: false,
-              status:"error",
               code: errorcodes.USERNAME_NOTEXIST 
           });
       }else {
@@ -106,7 +105,7 @@ router.post('/UserLogout',function (req, res, next) {
 			});
 	}else {
 		res.send({
-			isAuth: false
+			success: true
 		})
 	}
 });
@@ -115,7 +114,7 @@ router.post('/UserLogout',function (req, res, next) {
 router.put('/UpdateUser/:userId', function(req, res, next) {
   if(!auth.isAdminAuth(req))
   {
-      res.send({
+      res.status(401).send({
           success: false,
           code: errorcodes.NO_LOGIN
       });
@@ -158,7 +157,7 @@ router.put('/UpdateUser/:userId', function(req, res, next) {
 router.delete('/DeleteUser/:userId', function(req, res, next) {
   if(!auth.isAdminAuth(req))
   {
-      res.send({
+      res.status(401).send({
           success: false,
           code: errorcodes.NO_LOGIN
       });
@@ -183,36 +182,69 @@ router.delete('/DeleteUser/:userId', function(req, res, next) {
 
 //分页查询管理员
 router.get('/UsersByPage', function(req, res, next) {
-  let {page,username,rowCount}=req.query;
-  let limit = rowCount?rowCount:constants.PAGE_SIZE;
-  let skip = (page - 1) * limit;
-  let queryCondition = {}; 
-  if(username){
-      queryCondition['username'] = new RegExp(username);
-  }
-  User.countDocuments(queryCondition, (err, count)=>{
-    User.find(queryCondition)
-          // .sort(sortCondition)
-          .limit(limit)
-          .skip(skip)
-          .exec((err, users)=>{
-              if(err){
-                  res.send({
-                      success: false,
-                      error: err
-                  });
-              }else {
-                  res.send({
-                      success: true,
-                      list: users,
-                      pagination: {
-                          total: count,
-                          current: page
-                      }
-                  });
-              }
-          });
-  });
+    if(!auth.isAdminAuth(req))  //如果没有登录信息
+    {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        let {currentPage,username,pageSize}=req.query;
+        let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
+        let skip = (currentPage - 1) * limit;
+        let queryCondition = {}; 
+        if(username){
+            queryCondition['username'] = new RegExp(username);
+        }
+        User.countDocuments(queryCondition, (err, count)=>{
+          User.find(queryCondition)
+                // .sort(sortCondition)
+                .limit(limit)
+                .skip(skip)
+                .exec((err, users)=>{
+                    if(err){
+                        res.send({
+                            success: false,
+                            error: err
+                        });
+                    }else {
+                        res.send({
+                            success: true,
+                            list: users,
+                            pagination: {
+                                total: count,
+                                current: parseInt(currentPage)
+                            }
+                        });
+                    }
+                });
+        });
+    }
+  
 });
+
+//查询当前登录用户
+router.get('/CurrentUser', function(req, res, next) {
+    if(!auth.isAdminAuth(req))  //如果没有登录信息
+    {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        let currentUser = req.session.adminInfo;
+        res.send({
+            success: true,
+            name: currentUser.username,
+            avatar: 'https://gw.alipayobjects.com/zos/rmsportal/BiazfanxmamNRoxxVxka.png',
+            userid: currentUser._id,
+            notifyCount: 0
+        });
+    }
+  });
 
 module.exports = router;

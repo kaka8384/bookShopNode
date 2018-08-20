@@ -82,7 +82,7 @@ router.put('/UpdateProductIssue/:issueId', function(req, res, next) {
 router.put('/AnswerProductIssue/:issueId', function(req, res, next) {
     if(!auth.isAdminAuth(req))
     {
-        res.send({
+        res.status(401).send({
             success: false,
             code: errorcodes.NO_LOGIN
         });
@@ -162,9 +162,9 @@ router.delete('/DeleteProductIssue/:issueId', function(req, res, next) {
 
 //分页查询问题
 router.get('/Product_IssueByPage', function(req, res, next) {
-    let {page,productId,customerId,issue,answer,issueDate_s,issueDate_e,rowCount}=req.query;
-    let limit = rowCount?rowCount:constants.PAGE_SIZE;
-    let skip = (page - 1) * limit;
+    let {currentPage,productId,customerId,issue,answer,issueDate_s,issueDate_e,pageSize}=req.query;
+    let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
+    let skip = (currentPage - 1) * limit;
     let queryCondition = {}; 
     if(productId){
         queryCondition['productId'] = productId;
@@ -203,7 +203,7 @@ router.get('/Product_IssueByPage', function(req, res, next) {
                         list: issue,
                         pagination: {
                             total: count,
-                            current: page
+                            current: parseInt(currentPage)
                         }
                     });
                 }

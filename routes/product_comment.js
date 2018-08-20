@@ -189,9 +189,9 @@ router.put('/LikeComment/:commentId', function(req, res, next) {
 
 //评论分页查询
 router.get('/Product_CommentByPage', function(req, res, next) {
-    let {page,productId,customerId,commentCotent,commentStar,rowCount}=req.query;
-    let limit = rowCount?rowCount:constants.PAGE_SIZE;
-    let skip = (page - 1) * limit;
+    let {currentPage,productId,customerId,commentCotent,commentStar,pageSize}=req.query;
+    let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
+    let skip = (currentPage - 1) * limit;
     let queryCondition = {}; 
     if(productId){
         queryCondition['productId'] = productId;
@@ -222,7 +222,7 @@ router.get('/Product_CommentByPage', function(req, res, next) {
                         list: comment,
                         pagination: {
                             total: count,
-                            current: page
+                            current: parseInt(currentPage)
                         }
                     });
                 }

@@ -9,7 +9,7 @@ let auth=require('../utils/auth');
 router.post('/AddProduct', function(req, res, next) {
     if(!auth.isAdminAuth(req))
     {
-        res.send({
+        res.status(401).send({
             success: false,
             code: errorcodes.NO_LOGIN
         });
@@ -38,7 +38,7 @@ router.post('/AddProduct', function(req, res, next) {
 router.put('/UpdateProduct/:productId', function(req, res, next) {
     if(!auth.isAdminAuth(req))
     {
-        res.send({
+        res.status(401).send({
             success: false,
             code: errorcodes.NO_LOGIN
         });
@@ -69,7 +69,7 @@ router.put('/UpdateProduct/:productId', function(req, res, next) {
 router.delete('/DeleteProduct/:productId', function(req, res, next) {
     if(!auth.isAdminAuth(req))
     {
-        res.send({
+        res.status(401).send({
             success: false,
             code: errorcodes.NO_LOGIN
         });
@@ -94,9 +94,9 @@ router.delete('/DeleteProduct/:productId', function(req, res, next) {
 
 //分页查询产品
 router.get('/ProductByPage', function(req, res, next) {
-    let {page, name,descption,minPrice,maxPrice,rowCount,isActive=true,sort}=req.query;
-    let limit = rowCount?rowCount:constants.PAGE_SIZE;
-    let skip = (page - 1) * limit;
+    let {currentPage, name,descption,minPrice,maxPrice,pageSize,isActive=true,sort}=req.query;
+    let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
+    let skip = (currentPage - 1) * limit;
     let queryCondition = {}; 
     let sortCondition = {};
     if(name){
@@ -160,7 +160,7 @@ router.get('/ProductByPage', function(req, res, next) {
                         list: products,
                         pagination: {
                             total: count,
-                            current: page
+                            current: parseInt(currentPage)
                         }
                     });
                 }

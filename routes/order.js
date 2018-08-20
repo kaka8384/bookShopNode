@@ -132,9 +132,9 @@ router.put('/DeleteOrder/:orderId', function(req, res, next) {
 
 //分页订单查询
 router.get('/OrdersByPage', function(req, res, next) {
-    let {page,ordernum,cid,createdate_s,createdate_e,productname,status,rowCount,isDelete}=req.query;
-    let limit = rowCount?rowCount:constants.PAGE_SIZE;
-    let skip = (page - 1) * limit;
+    let {currentPage,ordernum,cid,createdate_s,createdate_e,productname,status,pageSize,isDelete}=req.query;
+    let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
+    let skip = (currentPage - 1) * limit;
     let queryCondition = {}; 
     // let sortCondition = {};
     if(ordernum){
@@ -179,7 +179,7 @@ router.get('/OrdersByPage', function(req, res, next) {
                         list: orders,
                         pagination: {
                             total: count,
-                            current: page
+                            current:parseInt(currentPage) 
                         }
                     });
                 }

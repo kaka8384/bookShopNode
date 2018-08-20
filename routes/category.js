@@ -10,7 +10,7 @@ let errorcodes=require('../constants/errorCodes');
 router.post('/AddCatgeory', function(req, res, next) {
     if(!auth.isAdminAuth(req))
     {
-        res.send({
+        res.status(401).send({
             success: false,
             code: errorcodes.NO_LOGIN
         });
@@ -39,7 +39,7 @@ router.post('/AddCatgeory', function(req, res, next) {
 router.delete('/DeleteCatgeory/:categoryId', function(req, res, next) {
     if(!auth.isAdminAuth(req))
     {
-        res.send({
+        res.status(401).send({
             success: false,
             code: errorcodes.NO_LOGIN
         });
@@ -66,7 +66,7 @@ router.delete('/DeleteCatgeory/:categoryId', function(req, res, next) {
 router.put('/UpdateCatgeory/:categoryId', function(req, res, next) {
     if(!auth.isAdminAuth(req))
     {
-        res.send({
+        res.status(401).send({
             success: false,
             code: errorcodes.NO_LOGIN
         });
@@ -121,15 +121,16 @@ router.get('/CatgeoryByPage', function(req, res, next) {
     }
     else
     {
-        let {page, name}=req.query;
-        let limit = constants.PAGE_SIZE;
-        let skip = (page - 1) * limit;
+        let {currentPage, pageSize,name}=req.query;
+        let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
+        let skip = (currentPage - 1) * limit;
         let queryCondition = {};
         if(name){
             queryCondition['name'] = new RegExp(name);
         }
         Category.countDocuments(queryCondition, (err, count)=>{
             Category.find(queryCondition)
+                .sort({"updated":-1})
                 .limit(limit)
                 .skip(skip)
                 .exec((err, catgeories)=>{
@@ -144,7 +145,7 @@ router.get('/CatgeoryByPage', function(req, res, next) {
                             list: catgeories,
                             pagination: {
                                 total: count,
-                                current: page
+                                current:parseInt(currentPage)
                             }
                         });
                     }
