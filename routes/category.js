@@ -55,7 +55,36 @@ router.delete('/DeleteCatgeory/:categoryId', function(req, res, next) {
                 });
             } else {
                 res.send({
-                    success: true
+                    success: true,
+                    categoryId:categoryId
+                });
+            }
+        });
+    }
+});
+
+//批量删除分类
+router.delete('/BatchDeleteCatgeory', function(req, res, next) {
+    if(!auth.isAdminAuth(req))
+    {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        let categoryIds = req.body.categoryIds;
+        Category.remove({_id: {$in:categoryIds}}, (err)=>{
+            if (err) {
+                res.send({
+                    success: false,
+                    error: err
+                });
+            } else {
+                res.send({
+                    success: true,
+                    categoryIds:categoryIds
                 });
             }
         });
