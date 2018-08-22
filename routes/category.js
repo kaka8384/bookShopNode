@@ -4,6 +4,7 @@ let Category=require('../models/category');
 let moment=require('moment');
 let constants=require('../constants/constants');
 let auth=require('../utils/auth');
+let utils=require('../utils/utils');
 let errorcodes=require('../constants/errorCodes');
 
 //添加分类
@@ -150,16 +151,31 @@ router.get('/CatgeoryByPage', function(req, res, next) {
     }
     else
     {
-        let {currentPage, pageSize,name}=req.query;
+        let {currentPage, pageSize,name,sorter}=req.query;
         let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
         let skip = (currentPage - 1) * limit;
         let queryCondition = {};
+        let sortCondition = {};
+        if(sorter)
+        {
+            let sortField=utils.getSortField(sorter);
+            let sortType=utils.getSortType(sorter);
+            switch(sortField)
+            {
+                case 'name':
+                    Object.assign(sortCondition,{'name':sortType}); 
+                    break;
+                case 'updated':
+                    Object.assign(sortCondition,{'updated':sortType}); 
+                    break;
+            }
+        }   
         if(name){
             queryCondition['name'] = new RegExp(name);
         }
         Category.countDocuments(queryCondition, (err, count)=>{
             Category.find(queryCondition)
-                .sort({"updated":-1})
+                .sort(sortCondition)
                 .limit(limit)
                 .skip(skip)
                 .exec((err, catgeories)=>{

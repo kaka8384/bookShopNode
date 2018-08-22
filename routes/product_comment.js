@@ -21,16 +21,17 @@ router.post('/AddProductComment', function(req, res, next) {
     {
         let currentUser = req.session.userInfo;
         let comment = req.body;
-        if(!currentUser||currentUser._id!==comment.customerId)
-        {
-            res.send({
-                success: false,
-                code:errorcodes.NO_DATA_PERMISSION
-            });
-        }
-        else
-        {
+        // if(!currentUser||currentUser._id!==comment.customerId)
+        // {
+        //     res.send({
+        //         success: false,
+        //         code:errorcodes.NO_DATA_PERMISSION
+        //     });
+        // }
+        // else
+        // {
             var newModel=new Product_Comment(comment);
+            newModel.customerId==currentUser._id;
             newModel.save().then(function(comment){
                 _updateOrderCommentCount(comment.productId,1);
                 _updateOrderCommentStatus(comment,true);
@@ -45,7 +46,7 @@ router.post('/AddProductComment', function(req, res, next) {
                     error: err
                 });
             });
-        }
+        // }
     }
 });
 
