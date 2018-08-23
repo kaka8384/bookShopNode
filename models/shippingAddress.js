@@ -21,4 +21,8 @@ shippingAddressSchema.statics.findByShippingAddressId=function(addressId, cb){
     return this.find({_id:addressId}, cb);
 };
 
+shippingAddressSchema.statics.findByCustomerId=function(customerId, cb){
+    return this.find({customerId:customerId}, cb);
+};
+
 module.exports = mongoose.model('ShippingAddress', shippingAddressSchema);
