@@ -22,7 +22,7 @@ router.post('/AddCatgeory', function(req, res, next) {
         var newModel=new Category(category);
         newModel.save((err, category)=>{
             if(err){
-                res.send({
+                res.status(500).send({
                     success: false,
                     error: err
                 });
@@ -50,7 +50,7 @@ router.delete('/DeleteCatgeory/:categoryId', function(req, res, next) {
         let categoryId = req.params.categoryId;
         Category.remove({_id: categoryId}, (err)=>{
             if (err) {
-                res.send({
+                res.status(500).send({
                     success: false,
                     error: err
                 });
@@ -78,7 +78,7 @@ router.delete('/BatchDeleteCatgeory', function(req, res, next) {
         let categoryIds = req.body.categoryIds;
         Category.remove({_id: {$in:categoryIds}}, (err)=>{
             if (err) {
-                res.send({
+                res.status(500).send({
                     success: false,
                     error: err
                 });
@@ -109,7 +109,7 @@ router.put('/UpdateCatgeory/:categoryId', function(req, res, next) {
         let newCatgeory = Object.assign({}, category);
         Category.findOneAndUpdate({_id:categoryId}, newCatgeory, {new: true}, (err, category)=>{
             if(err){
-                res.send({
+                res.status(500).send({
                     success: false,
                     error: err
                 });
@@ -125,16 +125,16 @@ router.put('/UpdateCatgeory/:categoryId', function(req, res, next) {
 
 //查询所有分类
 router.get('/AllCatgeory', function(req, res, next) {
-    Category.find({}, (err, catgeories)=> {
+    Category.find({}, (err, categories)=> {
         if(err){
-            res.send({
+            res.status(500).send({
                 success: false,
                 error: err
             });
         }else {
             res.send({
                 success: true,
-                catgeories: catgeories
+                categories: categories
             });
         }
     })
@@ -180,7 +180,7 @@ router.get('/CatgeoryByPage', function(req, res, next) {
                 .skip(skip)
                 .exec((err, catgeories)=>{
                     if(err){
-                        res.send({
+                        res.status(500).send({
                             success: false,
                             error: err
                         });

@@ -4,6 +4,7 @@ let Product=require('../models/product');
 let moment=require('moment');
 let constants=require('../constants/constants');
 let auth=require('../utils/auth');
+let utils=require('../utils/utils');
 
 //添加产品
 router.post('/AddProduct', function(req, res, next) {
@@ -20,7 +21,7 @@ router.post('/AddProduct', function(req, res, next) {
         var newModel=new Product(product);
         newModel.save((err, product)=>{
             if(err){
-                res.send({
+                res.status(500).send({
                     success: false,
                     error: err
                 });
@@ -51,7 +52,7 @@ router.put('/UpdateProduct/:productId', function(req, res, next) {
         let newModel= Object.assign({}, product);
         Product.findOneAndUpdate({_id:productId}, newModel, {new: true}, (err, product)=>{
             if(err){
-                res.send({
+                res.status(500).send({
                     success: false,
                     error: err
                 });
@@ -79,7 +80,7 @@ router.delete('/DeleteProduct/:productId', function(req, res, next) {
         let productId = req.params.productId;
         Product.remove({_id: productId}, (err)=>{
             if (err) {
-                res.send({
+                res.status(500).send({
                     success: false,
                     error: err
                 });
@@ -93,79 +94,98 @@ router.delete('/DeleteProduct/:productId', function(req, res, next) {
 });
 
 //分页查询产品
+//param:queryType(查询类型 1.网站查询 2.后台查询)
 router.get('/ProductByPage', function(req, res, next) {
-    let {currentPage, name,descption,minPrice,maxPrice,pageSize,isActive=true,sort}=req.query;
-    let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
-    let skip = (currentPage - 1) * limit;
-    let queryCondition = {}; 
-    let sortCondition = {};
-    if(name){
-        queryCondition['name'] = new RegExp(name);
-    }
-    if(descption){
-        queryCondition['descption'] = new RegExp(descption);
-    }
-    if(minPrice)
+    let {currentPage,name,descption,author,publisher,inventory,publicationTime_S,publicationTime_E,minPrice,maxPrice,pageSize,isActive=true,sorter,queryType=1}=req.query;
+    if(queryType===2&&!auth.isAdminAuth(req))
     {
-        Object.assign(queryCondition,{"price":{$gte:minPrice}});
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
     }
-    if(maxPrice)
+    else
     {
-        Object.assign(queryCondition,{"price":{$lte:maxPrice}});
-    }
-    queryCondition['isActive'] = isActive;
-    if(sort)
-    {
-        switch(sort)
-        {
-            case "1": //价格正序
-            Object.assign(sortCondition,{"price":1});    
-            break;
-            case "2": //价格反序
-            Object.assign(sortCondition,{"price":-1});    
-            break;
-            case "3": //销量正序
-            Object.assign(sortCondition,{"salesCount":1});    
-            break;
-            case "4": //销量反序
-            Object.assign(sortCondition,{"salesCount":-1});    
-            break;
-            case "5": //评论数正序
-            Object.assign(sortCondition,{"commentCount":1});    
-            break;
-            case "6": //评论数反序
-            Object.assign(sortCondition,{"commentCount":-1});   
-            case "7": //出版时间正序
-            Object.assign(sortCondition,{"bookAttribute.publicationTime":1});    
-            break;
-            case "8": //出版时间反序
-            Object.assign(sortCondition,{"bookAttribute.publicationTime":-1});    
-            break;
+        let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
+        let skip = (currentPage - 1) * limit;
+        let queryCondition = {}; 
+        let sortCondition = {};
+        if(name){
+            queryCondition['name'] = new RegExp(name);
         }
-    }
-    Product.countDocuments(queryCondition, (err, count)=>{
-        Product.find(queryCondition)
-            .sort(sortCondition)
-            .limit(limit)
-            .skip(skip)
-            .exec((err, products)=>{
-                if(err){
-                    res.send({
-                        success: false,
-                        error: err
-                    });
-                }else {
-                    res.send({
-                        success: true,
-                        list: products,
-                        pagination: {
-                            total: count,
-                            current: parseInt(currentPage)
-                        }
-                    });
-                }
-            });
-    });
+        if(descption){
+            queryCondition['descption'] = new RegExp(descption);
+        }
+        if(author){
+            queryCondition['bookAttribute.author'] = new RegExp(author);
+        }
+        if(publisher){
+            queryCondition['bookAttribute.publisher'] = new RegExp(publisher);
+        }
+        if(inventory)
+        {
+            queryCondition['inventory'] =inventory;
+        }
+        if(publicationTime_S&&publicationTime_E)
+        {
+            Object.assign(queryCondition,{"bookAttribute.publicationTime":{$gte:publicationTime_S,$lte:publicationTime_E}});
+        }
+        if(minPrice)
+        {
+            Object.assign(queryCondition,{"price":{$gte:minPrice}});
+        }
+        if(maxPrice)
+        {
+            Object.assign(queryCondition,{"price":{$lte:maxPrice}});
+        }
+        queryCondition['isActive'] = isActive;
+        if(sorter)
+        {
+            let sortField=utils.getSortField(sorter);
+            let sortType=utils.getSortType(sorter);
+            switch(sortField)
+            {
+                case "price.$numberDecimal": //价格排序
+                Object.assign(sortCondition,{"price":sortType});    
+                break;
+                case "salesCount": //销量排序
+                Object.assign(sortCondition,{"salesCount":sortType});    
+                break;
+                case "commentCount": //评论数排序
+                Object.assign(sortCondition,{"commentCount":sortType});    
+                break;
+                case "bookAttribute.publicationTime": //出版时间排序
+                Object.assign(sortCondition,{"bookAttribute.publicationTime":sortType});    
+                break;
+                case "updated": //更新时间排序
+                Object.assign(sortCondition,{"updated":sortType});    
+                break;
+            }
+        }
+        Product.countDocuments(queryCondition, (err, count)=>{
+            Product.find(queryCondition)
+                .sort(sortCondition)
+                .limit(limit)
+                .skip(skip)
+                .exec((err, products)=>{
+                    if(err){
+                        res.status(500).send({
+                            success: false,
+                            error: err
+                        });
+                    }else {
+                        res.send({
+                            success: true,
+                            list: products,
+                            pagination: {
+                                total: count,
+                                current: parseInt(currentPage)
+                            }
+                        });
+                    }
+                });
+        });
+    }  
 });
 
 module.exports = router;
