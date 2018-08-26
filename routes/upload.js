@@ -4,6 +4,7 @@ let fs = require('fs');
 let path = require('path');
 var multipart = require('connect-multiparty');
 let errorcodes=require('../constants/errorCodes');
+let auth=require('../utils/auth');
 
 router.post('/UploadImg', multipart(), function (req, res) {
     if(!auth.isAdminAuth(req))
