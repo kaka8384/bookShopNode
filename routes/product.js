@@ -86,7 +86,36 @@ router.delete('/DeleteProduct/:productId', function(req, res, next) {
                 });
             } else {
                 res.send({
-                    success: true
+                    success: true,
+                    productId:productId
+                });
+            }
+        });
+    }
+});
+
+//批量删除商品
+router.delete('/BatchDeleteProduct', function(req, res, next) {
+    if(!auth.isAdminAuth(req))
+    {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        let productIds = req.body.productIds;
+        Product.remove({_id: {$in:productIds}}, (err)=>{
+            if (err) {
+                res.status(500).send({
+                    success: false,
+                    error: err
+                });
+            } else {
+                res.send({
+                    success: true,
+                    productIds:productIds
                 });
             }
         });
@@ -96,7 +125,7 @@ router.delete('/DeleteProduct/:productId', function(req, res, next) {
 //分页查询产品
 //param:queryType(查询类型 1.网站查询 2.后台查询)
 router.get('/ProductByPage', function(req, res, next) {
-    let {currentPage,name,descption,author,publisher,inventory,publicationTime_S,publicationTime_E,minPrice,maxPrice,pageSize,isActive=true,sorter,queryType=1}=req.query;
+    let {currentPage,name,descption,author,publisher,inventory,publicationTime_S,publicationTime_E,minPrice,maxPrice,pageSize,isActive,sorter,queryType=1}=req.query;
     if(queryType===2&&!auth.isAdminAuth(req))
     {
         res.status(401).send({
@@ -138,7 +167,11 @@ router.get('/ProductByPage', function(req, res, next) {
         {
             Object.assign(queryCondition,{"price":{$lte:maxPrice}});
         }
-        queryCondition['isActive'] = isActive;
+        if(isActive)
+        {
+            queryCondition['isActive'] = isActive;
+        }
+
         if(sorter)
         {
             let sortField=utils.getSortField(sorter);
@@ -161,6 +194,10 @@ router.get('/ProductByPage', function(req, res, next) {
                 Object.assign(sortCondition,{"updated":sortType});    
                 break;
             }
+        }
+        else
+        {
+            Object.assign(sortCondition,{"updated":-1}); // 默认按更新时间倒序    
         }
         Product.countDocuments(queryCondition, (err, count)=>{
             Product.find(queryCondition)
@@ -186,6 +223,35 @@ router.get('/ProductByPage', function(req, res, next) {
                 });
         });
     }  
+});
+
+//查询单个产品
+router.get('/ProductQuery', function(req, res, next) {
+    let {pid,queryType=1}=req.query;
+    if(queryType===2&&!auth.isAdminAuth(req))
+    {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        Product.findByProductId(pid,function(err, item){
+            if(err){
+                res.send({
+                    error:err
+                });
+            }
+            else
+            {
+                res.send({
+                    success: true,
+                    item:item
+                });
+            }
+        })
+    }
 });
 
 module.exports = router;
