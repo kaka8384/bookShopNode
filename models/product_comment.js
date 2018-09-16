@@ -5,8 +5,11 @@ let Schema = mongoose.Schema;
 //商品评论
 let commentSchema = new Schema({
     productId: { type: Schema.Types.ObjectId, required: true}, //商品ID
+    productName: {  type: String, required: true,trim:true }, //商品名称
     customerId: { type: Schema.Types.ObjectId, required: true}, //客户ID
+    customerName:{ type: String, trim:true },//客户昵称
     orderId: { type: Schema.Types.ObjectId, required: true}, //订单ID
+    orderNumber: { type: String, required: true}, //订单编号
     commentCotent: { type: String, required: true,maxlength:200}, //评论内容
     commentStar: { type: Number, required: true}, //评论星级
     likeCustomers:[Schema.Types.ObjectId], //点赞客户

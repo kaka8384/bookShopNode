@@ -20,6 +20,7 @@ var customerRouter = require('./routes/customer');
 var shoppingCatRouter = require('./routes/shoppingCat');
 var orderRouter = require('./routes/order');
 var product_commentRouter = require('./routes/product_comment');
+var product_collectRouter = require('./routes/product_collect');
 var product_issueRouter = require('./routes/product_issue');
 var shippingAddressRouter = require('./routes/shippingAddress');
 var uploadRouter = require('./routes/upload');
@@ -56,6 +57,7 @@ app.use('/api',product_commentRouter);
 app.use('/api',product_issueRouter);
 app.use('/api',shippingAddressRouter);
 app.use('/api',uploadRouter);
+app.use('/api',product_collectRouter);
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

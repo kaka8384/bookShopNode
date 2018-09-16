@@ -171,7 +171,6 @@ router.get('/ProductByPage', function(req, res, next) {
         {
             queryCondition['isActive'] = isActive;
         }
-
         if(sorter)
         {
             let sortField=utils.getSortField(sorter);
@@ -239,7 +238,7 @@ router.get('/ProductQuery', function(req, res, next) {
     {
         Product.findByProductId(pid,function(err, item){
             if(err){
-                res.send({
+                res.status(500).send({
                     error:err
                 });
             }

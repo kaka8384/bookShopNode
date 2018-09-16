@@ -7,6 +7,7 @@ let moment=require('moment');
 let constants=require('../constants/constants');
 let errorcodes=require('../constants/errorCodes');
 let auth=require('../utils/auth');
+let utils=require('../utils/utils');
 
 //新建评论
 router.post('/AddProductComment', function(req, res, next) {
@@ -21,32 +22,22 @@ router.post('/AddProductComment', function(req, res, next) {
     {
         let currentUser = req.session.userInfo;
         let comment = req.body;
-        // if(!currentUser||currentUser._id!==comment.customerId)
-        // {
-        //     res.send({
-        //         success: false,
-        //         code:errorcodes.NO_DATA_PERMISSION
-        //     });
-        // }
-        // else
-        // {
-            var newModel=new Product_Comment(comment);
-            newModel.customerId==currentUser._id;
-            newModel.save().then(function(comment){
-                _updateOrderCommentCount(comment.productId,1);
-                _updateOrderCommentStatus(comment,true);
-                res.send({
-                    success: true,
-                    comment: comment
-                });
-         
-            }).error(function(err){
-                res.send({
-                    success: false,
-                    error: err
-                });
+        var newModel=new Product_Comment(comment);
+        newModel.customerId==currentUser._id;
+        newModel.save().then(function(comment){
+            _updateOrderCommentCount(comment.productId,1);
+            _updateOrderCommentStatus(comment,true);
+            res.send({
+                success: true,
+                comment: comment
             });
-        // }
+        
+        }).error(function(err){
+            res.send({
+                success: false,
+                error: err
+            });
+        });
     }
 });
 
@@ -94,9 +85,17 @@ router.put('/UpdateProductComment/:commentId', function(req, res, next) {
 
 //删除评论
 router.delete('/DeleteProductComment/:commentId', function(req, res, next) {
-    if(!auth.isAuth(req))
+    let comment = req.body;
+    if(comment.isAdmin&&!auth.isAdminAuth(req))
     {
-        res.send({
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else if(!comment.isAdmin&&!auth.isAuth(req))
+    {
+        res.status(401).send({
             success: false,
             code: errorcodes.NO_LOGIN
         });
@@ -105,8 +104,8 @@ router.delete('/DeleteProductComment/:commentId', function(req, res, next) {
     {
         let currentUser = req.session.userInfo;
         let commentId = req.params.commentId;
-        let comment = req.body;
-        if(!currentUser||currentUser._id!==comment.customerId)
+        //  非管理员删除时判断该提问是否为自己提的
+        if(!comment.isAdmin&&(!currentUser||currentUser._id!==comment.customerId))
         {
             res.send({
                 success: false,
@@ -130,11 +129,11 @@ router.delete('/DeleteProductComment/:commentId', function(req, res, next) {
                         _updateOrderCommentStatus(comment[0],false); //修改评论状态
                         res.send({
                             success: true,
-                            comment: comment[0]
+                            commentId: commentId
                         });
                     })
                     .error(function(err){
-                        res.send({
+                        res.status(500).send({
                                     success: false,
                                     error: err
                                 });
@@ -189,46 +188,82 @@ router.put('/LikeComment/:commentId', function(req, res, next) {
 });
 
 //评论分页查询
+//param:queryType(查询类型 1.网站查询 2.后台查询)
 router.get('/Product_CommentByPage', function(req, res, next) {
-    let {currentPage,productId,customerId,commentCotent,commentStar,pageSize}=req.query;
-    let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
-    let skip = (currentPage - 1) * limit;
-    let queryCondition = {}; 
-    if(productId){
-        queryCondition['productId'] = productId;
+    let {currentPage,productId,productName,customerId,customerName,commentCotent,commentStar,pageSize,sorter,queryType}=req.query;
+    if(queryType===2&&!auth.isAdminAuth(req))
+    {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
     }
-    if(customerId){
-        queryCondition['customerId'] = customerId;
+    else
+    {
+        let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
+        let skip = (currentPage - 1) * limit;
+        let queryCondition = {}; 
+        let sortCondition = {};
+        if(productId){
+            queryCondition['productId'] = productId;
+        }
+        if(customerId){
+            queryCondition['customerId'] = customerId;
+        }
+        if(customerName){
+            queryCondition['customerName'] = new RegExp(customerName);
+        }
+        if(productName){
+            queryCondition['productName'] = new RegExp(productName);
+        }
+        if(commentCotent){
+            queryCondition['commentCotent'] = new RegExp(commentCotent);
+        }
+        if(commentStar){
+            queryCondition['commentStar'] = commentStar;
+        }
+        if(sorter)
+        {
+            let sortField=utils.getSortField(sorter);
+            let sortType=utils.getSortType(sorter);
+            switch(sortField)
+            {
+                case "productName": //商品名称
+                Object.assign(sortCondition,{"productName":sortType});    
+                break;    
+                case "updated": //更新时间排序
+                Object.assign(sortCondition,{"updated":sortType});    
+                break;
+            }
+        }
+        else
+        {
+            Object.assign(sortCondition,{"updated":-1}); // 默认按更新时间倒序    
+        }
+        Product_Comment.countDocuments(queryCondition, (err, count)=>{
+            Product_Comment.find(queryCondition)
+                .sort(sortCondition)
+                .limit(limit)
+                .skip(skip)
+                .exec((err, comment)=>{
+                    if(err){
+                        res.status(500).send({
+                            success: false,
+                            error: err
+                        });
+                    }else {
+                        res.send({
+                            success: true,
+                            list: comment,
+                            pagination: {
+                                total: count,
+                                current: parseInt(currentPage)
+                            }
+                        });
+                    }
+                });
+        });
     }
-    if(commentCotent){
-        queryCondition['commentCotent'] = new RegExp(commentCotent);
-    }
-    if(commentStar){
-        queryCondition['commentStar'] = commentStar;
-    }
-    Product_Comment.countDocuments(queryCondition, (err, count)=>{
-        Product_Comment.find(queryCondition)
-            .sort({"updated":-1})
-            .limit(limit)
-            .skip(skip)
-            .exec((err, comment)=>{
-                if(err){
-                    res.send({
-                        success: false,
-                        error: err
-                    });
-                }else {
-                    res.send({
-                        success: true,
-                        list: comment,
-                        pagination: {
-                            total: count,
-                            current: parseInt(currentPage)
-                        }
-                    });
-                }
-            });
-    });
 });
 
 //修改商品的评价次数

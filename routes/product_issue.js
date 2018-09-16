@@ -5,6 +5,7 @@ let moment=require('moment');
 let constants=require('../constants/constants');
 let errorcodes=require('../constants/errorCodes');
 let auth=require('../utils/auth');
+let utils=require('../utils/utils');
 
 //添加问题
 router.post('/AddProductIssue', function(req, res, next) {
@@ -28,7 +29,7 @@ router.post('/AddProductIssue', function(req, res, next) {
             });
      
         }).error(function(err){
-            res.send({
+            res.status(500).send({
                 success: false,
                 error: err
             });
@@ -63,7 +64,7 @@ router.put('/UpdateProductIssue/:issueId', function(req, res, next) {
             let newModel= Object.assign({}, issue);
             Product_Issue.findOneAndUpdate({_id:issueId}, newModel, {new: true}, (err, issue)=>{
                 if(err){
-                    res.send({
+                    res.status(500).send({
                         success: false,
                         error: err
                     });
@@ -95,7 +96,7 @@ router.put('/AnswerProductIssue/:issueId', function(req, res, next) {
         let newModel= Object.assign({}, issue);
         Product_Issue.findOneAndUpdate({_id:issueId}, newModel, {new: true}, (err, issue)=>{
             if(err){
-                res.send({
+                res.status(500).send({
                     success: false,
                     error: err
                 });
@@ -111,9 +112,17 @@ router.put('/AnswerProductIssue/:issueId', function(req, res, next) {
 
 //删除问题
 router.delete('/DeleteProductIssue/:issueId', function(req, res, next) {
-    if(!auth.isAuth(req))
+    let issue = req.body;
+    if(issue.isAdmin&&!auth.isAdminAuth(req))
     {
-        res.send({
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else if(!issue.isAdmin&&!auth.isAuth(req))
+    {
+        res.status(401).send({
             success: false,
             code: errorcodes.NO_LOGIN
         });
@@ -122,8 +131,9 @@ router.delete('/DeleteProductIssue/:issueId', function(req, res, next) {
     {
         let currentUser = req.session.userInfo;
         let issueId = req.params.issueId;
-        let issue = req.body;
-        if(!currentUser||currentUser._id!==issue.customerId)
+    
+        //  非管理员删除时判断该提问是否为自己提的
+        if(!issue.isAdmin&&(!currentUser||currentUser._id!==issue.customerId))
         {
             res.send({
                 success: false,
@@ -145,11 +155,11 @@ router.delete('/DeleteProductIssue/:issueId', function(req, res, next) {
                     Product_Issue.remove({_id: issue[0]._id}).then(function(){
                         res.send({
                             success: true,
-                            comment: issue[0]
+                            issueId:issueId
                         });
                     })
                     .error(function(err){
-                        res.send({
+                        res.status(500).send({
                             success: false,
                             error: err
                         });
@@ -160,55 +170,113 @@ router.delete('/DeleteProductIssue/:issueId', function(req, res, next) {
     }
 });
 
+//批量删除问题(管理员后台操作)
+router.delete('/BatchDeleteProductIssue', function(req, res, next) {
+    if(!auth.isAdminAuth(req))
+    {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        let issueIds = req.body.issueIds;
+        Product_Issue.remove({_id: {$in:issueIds}}, (err)=>{
+            if (err) {
+                res.status(500).send({
+                    success: false,
+                    error: err
+                });
+            } else {
+                res.send({
+                    success: true,
+                    issueIds:issueIds
+                });
+            }
+        });
+    }
+});
+
 //分页查询问题
+//param:queryType(查询类型 1.网站查询 2.后台查询)
 router.get('/Product_IssueByPage', function(req, res, next) {
-    let {currentPage,productId,customerId,issue,answer,issueDate_s,issueDate_e,pageSize}=req.query;
-    let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
-    let skip = (currentPage - 1) * limit;
-    let queryCondition = {}; 
-    if(productId){
-        queryCondition['productId'] = productId;
-    }
-    if(customerId){
-        queryCondition['customerId'] = customerId;
-    }
-    if(issue){
-        queryCondition['issue'] = new RegExp(issue);
-    }
-    if(answer){
-        queryCondition['answer'] = new RegExp(answer);
-    }
-    if(issueDate_s)
+    let {currentPage,productId,productName,customerId,issue,issueDate_s,issueDate_e,pageSize,sorter,queryType}=req.query;
+    if(queryType===2&&!auth.isAdminAuth(req))
     {
-        Object.assign(queryCondition,{"issueDate":{$gte:issueDate_s}});
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
     }
-    if(issueDate_e)
+    else
     {
-        Object.assign(queryCondition,{"issueDate":{$lte:issueDate_e}});
+        let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
+        let skip = (currentPage - 1) * limit;
+        let queryCondition = {}; 
+        let sortCondition = {};
+        if(productId){
+            queryCondition['productId'] = productId;
+        }
+        if(productName){
+            queryCondition['productName'] = new RegExp(productName);
+        }
+        if(customerId){
+            queryCondition['customerId'] = customerId;
+        }
+        if(issue){
+            queryCondition['issue'] = new RegExp(issue);
+        }
+
+        if(issueDate_s&&issueDate_e)
+        {
+            Object.assign(queryCondition,{"issueDate":{$gte:issueDate_s,$lte:issueDate_e}});
+        }
+        if(sorter)
+        {
+            let sortField=utils.getSortField(sorter);
+            let sortType=utils.getSortType(sorter);
+            switch(sortField)
+            {
+                case "productName": //商品名称
+                Object.assign(sortCondition,{"productName":sortType});    
+                break;
+                case "issueDate": //提问时间排序
+                Object.assign(sortCondition,{"issueDate":sortType});    
+                case "updated": //更新时间排序
+                Object.assign(sortCondition,{"updated":sortType});    
+                break;
+            }
+        }
+        else
+        {
+            Object.assign(sortCondition,{"issueDate":-1,"updated":-1}); // 默认按提问时间、更新时间倒序    
+        }
+        Product_Issue.countDocuments(queryCondition, (err, count)=>{
+            Product_Issue.find(queryCondition)
+                .sort(sortCondition)
+                .limit(limit)
+                .skip(skip)
+                .exec((err, issue)=>{
+                    if(err){
+                        res.status(500).send({
+                            success: false,
+                            error: err
+                        });
+                    }else {
+                        res.send({
+                            success: true,
+                            list: issue,
+                            pagination: {
+                                total: count,
+                                current: parseInt(currentPage)
+                            }
+                        });
+                    }
+                });
+        });
     }
-    Product_Issue.countDocuments(queryCondition, (err, count)=>{
-        Product_Issue.find(queryCondition)
-            .sort({"issueDate":-1,"updated":-1})
-            .limit(limit)
-            .skip(skip)
-            .exec((err, issue)=>{
-                if(err){
-                    res.send({
-                        success: false,
-                        error: err
-                    });
-                }else {
-                    res.send({
-                        success: true,
-                        list: issue,
-                        pagination: {
-                            total: count,
-                            current: parseInt(currentPage)
-                        }
-                    });
-                }
-            });
-    });
+   
 });
 
 module.exports = router;

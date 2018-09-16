@@ -140,6 +140,35 @@ router.get('/AllCatgeory', function(req, res, next) {
     })
 });
 
+//查询单个分类
+router.get('/CategoryQuery', function(req, res, next) {
+    let {cid,queryType=1}=req.query;
+    if(queryType===2&&!auth.isAdminAuth(req))
+    {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        Category.findByCategoryId(cid,function(err, item){
+            if(err){
+                res.status(500).send({
+                    error:err
+                });
+            }
+            else
+            {
+                res.send({
+                    success: true,
+                    item:item
+                });
+            }
+        })
+    }
+});
+
 //分页查询分类
 router.get('/CatgeoryByPage', function(req, res, next) {
     if(!auth.isAdminAuth(req))
