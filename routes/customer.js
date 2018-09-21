@@ -153,35 +153,168 @@ router.put('/UpdateCustomer/:customerId', function(req, res, next) {
     }
 });
 
-
 //网站用户注销(禁用)
 router.put('/CancelCustomer/:customerId', function(req, res, next) {
+    toggleCustomerStatus(req, res,1);
+});
+
+//网站用户启用
+router.put('/OpenCustomer/:customerId', function(req, res, next) {
+    toggleCustomerStatus(req, res,2);
+});
+
+//网站用户批量注销
+router.put('/BatchCancelCustomer', function(req, res, next) {
+    batchToggleCustomerStatus(req, res,1);
+});
+
+//网站用户批量启用
+router.put('/BatchOpenCustomer', function(req, res, next) {
+    batchToggleCustomerStatus(req, res,2);
+});
+
+//网站用户分页查询
+router.get('/CustomerByPage', function(req, res, next) {
+    let {currentPage,username,mobile,nickname,gender,brithDayStart,brithDayEnd,pageSize,isActive,sorter}==req.query;
     if(!auth.isAdminAuth(req))
     {
-        res.send({
+        res.status(401).send({
             success: false,
             code: errorcodes.NO_LOGIN
         });
     }
     else
     {
+        let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
+        let skip = (currentPage - 1) * limit;
+        let queryCondition = {}; 
+        let sortCondition = {};
+        if(username){
+            queryCondition['username'] = new RegExp(username);
+        }
+        if(mobile){
+            queryCondition['mobile'] = new RegExp(mobile);
+        }
+        if(nickname){
+            queryCondition['nickname'] = new RegExp(nickname);
+        }
+        if(gender){
+            queryCondition['gender'] = gender;
+        }
+        if(brithDayStart&&brithDayEnd)
+        {
+            Object.assign(queryCondition,{"brithDay":{$gte:brithDayStart,$lte:brithDayEnd}});
+        }
+        if(isActive)
+        {
+            queryCondition['isActive'] = isActive;
+        }
+        if(sorter)
+        {
+            let sortField=utils.getSortField(sorter);
+            let sortType=utils.getSortType(sorter);
+            switch(sortField)
+            {
+                case "username": //用户名
+                Object.assign(sortCondition,{"username":sortType});    
+                break;
+                case "nickname": //客户昵称
+                Object.assign(sortCondition,{"nickname":sortType});    
+                break;
+                case "gender": //性别
+                Object.assign(sortCondition,{"gender":sortType});    
+                break;
+                case "brithDay": //生日
+                Object.assign(sortCondition,{"brithDay":sortType});    
+                break;
+                case "updated": //更新时间排序
+                Object.assign(sortCondition,{"updated":sortType});    
+                break;
+            }
+        }
+        else
+        {
+            Object.assign(sortCondition,{"updated":-1}); // 默认按更新时间倒序    
+        }
+        Customer.countDocuments(queryCondition, (err, count)=>{
+            Customer.find(queryCondition)
+                .sort(sortCondition)
+                .limit(limit)
+                .skip(skip)
+                .exec((err, customers)=>{
+                    if(err){
+                        res.status(500).send({
+                            success: false,
+                            error: err
+                        });
+                    }else {
+                        res.send({
+                            success: true,
+                            list: customers,
+                            pagination: {
+                                total: count,
+                                current: parseInt(currentPage)
+                            }
+                        });
+                    }
+                });
+        });
+    }
+});
+
+module.exports = router;
+
+function batchToggleCustomerStatus(req, res,type) {
+    if (!auth.isAdminAuth(req)) {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else {
+        let customerIds = req.body.customerIds;
+        Customer.update({ _id: { $in: customerIds } }, { "isActive": type===1?false:true }, { multi: true }, (err) => {
+            if (err) {
+                res.status(500).send({
+                    success: false,
+                    error: err
+                });
+            }
+            else {
+                res.send({
+                    success: true,
+                    customerIds: customerIds
+                });
+            }
+        });
+    }
+}
+
+//切换客户是启用还是禁用
+function toggleCustomerStatus(req, res,type) {
+    if (!auth.isAdminAuth(req)) {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else {
         let customerId = req.params.customerId;
         let customer = req.body;
-        customer.updated=moment().format();
-        customer.isActive=false; //禁用用户
+        customer.updated = moment().format();
+        customer.isActive =type==1?false:true; //   1.禁用用户 2.启用用户
         let newCustomer = Object.assign({}, customer);
-        Customer.findOneAndUpdate({_id:customerId}, newCustomer, {new: true}, (err, customer)=>{
-            if(err){
+        Customer.findOneAndUpdate({ _id: customerId }, newCustomer, { new: true }, (err, customer) => {
+            if (err) {
                 res.send({
                     success: false,
                     error: err
                 });
             }
-            else if(customer==null)
-            {
+            else if (customer == null) {
                 res.send({
                     success: false,
-                    code: errorcodes.USERNAME_NOTEXIST 
+                    code: errorcodes.USERNAME_NOTEXIST
                 });
             }
             else {
@@ -192,62 +325,4 @@ router.put('/CancelCustomer/:customerId', function(req, res, next) {
             }
         });
     }
-});
-
-//网站用户分页查询
-router.get('/CustomerByPage', function(req, res, next) {
-    let {currentPage,username,mobile,nickname,gender,brithDayStart,brithDayEnd,pageSize,isActive}=req.query;
-    let limit = pageSize?paseInt(pageSize):constants.PAGE_SIZE;
-    let skip = (currentPage - 1) * limit;
-    let queryCondition = {}; 
-    // let sortCondition = {};
-    if(username){
-        queryCondition['username'] = new RegExp(username);
-    }
-    if(mobile){
-        queryCondition['mobile'] = new RegExp(mobile);
-    }
-    if(nickname){
-        queryCondition['nickname'] = new RegExp(nickname);
-    }
-    if(gender){
-        queryCondition['gender'] = gender;
-    }
-    if(brithDayStart)
-    {
-        Object.assign(queryCondition,{"brithDay":{$gt:brithDayStart}});
-    }
-    if(brithDayEnd)
-    {
-        Object.assign(queryCondition,{"brithDay":{$lt:brithDayEnd}});
-    }
-    if(isActive)
-    {
-        queryCondition['isActive'] = isActive;
-    }
-    Customer.countDocuments(queryCondition, (err, count)=>{
-        Customer.find(queryCondition)
-            // .sort(sortCondition)
-            .limit(limit)
-            .skip(skip)
-            .exec((err, customers)=>{
-                if(err){
-                    res.send({
-                        success: false,
-                        error: err
-                    });
-                }else {
-                    res.send({
-                        success: true,
-                        list: customers,
-                        pagination: {
-                            total: count,
-                            current: paseInt(currentPage)
-                        }
-                    });
-                }
-            });
-    });
-});
-
-module.exports = router;
+}
