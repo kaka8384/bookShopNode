@@ -186,6 +186,9 @@ router.get('/ProductByPage', function(req, res, next) {
                 case "commentCount": //评论数排序
                 Object.assign(sortCondition,{"commentCount":sortType});    
                 break;
+                case "collectCount": //收藏数排序
+                Object.assign(sortCondition,{"collectCount":sortType});    
+                break;
                 case "bookAttribute.publicationTime": //出版时间排序
                 Object.assign(sortCondition,{"bookAttribute.publicationTime":sortType});    
                 break;
@@ -252,5 +255,35 @@ router.get('/ProductQuery', function(req, res, next) {
         })
     }
 });
+
+//商品总数统计(上架图书)
+router.get('/ProductCount', function(req, res, next) {
+    if(!auth.isAdminAuth(req))
+    {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        let queryCondition = {}; 
+        queryCondition['isActive'] =true;
+        Product.countDocuments(queryCondition, (err, count)=>{
+            if(err){
+                res.status(500).send({
+                    success: false,
+                    error: err
+                });
+            }else {
+                res.send({
+                    success: true,
+                    count: count, 
+                });
+            }
+        })
+    }
+});
+
 
 module.exports = router;

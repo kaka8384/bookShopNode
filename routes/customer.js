@@ -175,7 +175,7 @@ router.put('/BatchOpenCustomer', function(req, res, next) {
 
 //网站用户分页查询
 router.get('/CustomerByPage', function(req, res, next) {
-    let {currentPage,username,mobile,nickname,gender,brithDayStart,brithDayEnd,pageSize,isActive,sorter}==req.query;
+    let {currentPage,username,mobile,nickname,gender,brithDayStart,brithDayEnd,pageSize,isActive,sorter}=req.query;
     if(!auth.isAdminAuth(req))
     {
         res.status(401).send({
@@ -259,6 +259,35 @@ router.get('/CustomerByPage', function(req, res, next) {
                     }
                 });
         });
+    }
+});
+
+//网站用户总数统计(可用的)
+router.get('/CustomerCount', function(req, res, next) {
+    if(!auth.isAdminAuth(req))
+    {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        let queryCondition = {}; 
+        queryCondition['isActive'] =true;
+        Customer.countDocuments(queryCondition, (err, count)=>{
+            if(err){
+                res.status(500).send({
+                    success: false,
+                    error: err
+                });
+            }else {
+                res.send({
+                    success: true,
+                    count: count, 
+                });
+            }
+        })
     }
 });
 

@@ -6,6 +6,7 @@ let moment=require('moment');
 let constants=require('../constants/constants');
 let utils=require('../utils/utils');
 let auth=require('../utils/auth');
+let errorcodes=require('../constants/errorCodes');
 
 //得出订单编号的追加序号
 function _getSequence(sequenceType)
@@ -49,6 +50,8 @@ router.post('/CreateOrder', function(req, res, next) {
           order.orderNumber=utils.getOrderNumber(promiseData.sequenceNum.toString()); //订单编号
           var newModel=new Order(order);
           newModel.orderStatus.push({status:1});  //订单状态设置为已提交
+          newModel.lastStatus=1;
+          newModel.createdateStr=moment().format('YYYY-MM-DD');
           newModel.save((err, order)=>{
               if(err){
                   res.send({
@@ -80,14 +83,14 @@ router.put('/UpdateOrder/:orderId', function(req, res, next) {
     {
         let orderId = req.params.orderId;
         let status = req.body.status;
-        var update={$set:{"updated":moment().format()}};
+        var update={$set:{"updated":moment().format(),"lastStatus":status}};
         if(status)
         {
             Object.assign(update,{$push:{"orderStatus":{"status":status}}}); //修改订单状态
         }
         Order.findOneAndUpdate({_id:orderId}, update, {new: true}, (err, order)=>{
             if(err){
-                res.send({
+                res.status(500).send({
                     success: false,
                     error: err
                 });
@@ -131,60 +134,151 @@ router.put('/DeleteOrder/:orderId', function(req, res, next) {
 });
 
 //分页订单查询
+//param:queryType(查询类型 1.网站查询 2.后台查询)
 router.get('/OrdersByPage', function(req, res, next) {
-    let {currentPage,ordernum,cid,createdate_s,createdate_e,productname,status,pageSize,isDelete}=req.query;
-    let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
-    let skip = (currentPage - 1) * limit;
-    let queryCondition = {}; 
-    // let sortCondition = {};
-    if(ordernum){
-        queryCondition['orderNumber'] = new RegExp(ordernum);
-    }
-    if(cid){
-        queryCondition['customerId'] = cid;
-    }
-    if(createdate_s)
+    let {currentPage,orderNumber,customerId,createdate_s,createdate_e,lastStatus,memo,payType,pageSize,isDelete,sorter,queryType=1}=req.query;
+    if(queryType===2&&!auth.isAdminAuth(req))
     {
-        Object.assign(queryCondition,{"createdate":{$gte:createdate_s}});
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
     }
-    if(createdate_e)
+    else
     {
-        Object.assign(queryCondition,{"createdate":{$lte:createdate_e}});
+        let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
+        let skip = (currentPage - 1) * limit;
+        let queryCondition = {}; 
+        let sortCondition = {};
+        if(orderNumber){
+            queryCondition['orderNumber'] = new RegExp(orderNumber);
+        }
+        if(customerId){
+            queryCondition['customerId'] = customerId;
+        }
+        if(createdate_s&&createdate_e)
+        {
+            Object.assign(queryCondition,{"createdate":{$gte:createdate_s,$lte:createdate_e}});
+        }
+        if(payType){
+            queryCondition['payType'] =payType;
+        }
+        if(lastStatus)
+        {
+            queryCondition['lastStatus'] =lastStatus;
+        }
+        if(memo){
+            queryCondition['memo'] = new RegExp(memo);
+        }
+        if(isDelete)
+        {
+            queryCondition['isDelete'] = isDelete;
+        }
+        if(sorter)
+        {
+            let sortField=utils.getSortField(sorter);
+            let sortType=utils.getSortType(sorter);
+            switch(sortField)
+            {
+                case "orderNumber": //订单编号
+                Object.assign(sortCondition,{"orderNumber":sortType});    
+                break;
+                case "createdate": //创建日期排序
+                Object.assign(sortCondition,{"createdate":sortType});    
+                break;
+                case "updated": //更新时间排序
+                Object.assign(sortCondition,{"updated":sortType});    
+                break;
+            }
+        }
+        else
+        {
+            Object.assign(sortCondition,{"orderNumber":-1}); // 默认按订单编号倒序    
+        }
+        Order.countDocuments(queryCondition, (err, count)=>{
+            Order.find(queryCondition)
+                .sort(sortCondition)
+                .limit(limit)
+                .skip(skip)
+                .exec((err, orders)=>{
+                    if(err){
+                        res.status(500).send({
+                            success: false,
+                            error: err
+                        });
+                    }else {
+                        res.send({
+                            success: true,
+                            list: orders,
+                            pagination: {
+                                total: count,
+                                current:parseInt(currentPage) 
+                            }
+                        });
+                    }
+                });
+        });
     }
-    if(productname){
-        queryCondition['products.name'] = new RegExp(productname);
-    }
-    if(status)
+});
+
+//订单总数统计(不包括已取消的)
+router.get('/OrdersCount', function(req, res, next) {
+    if(!auth.isAdminAuth(req))
     {
-        queryCondition['orderStatus.status'] =status;
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
     }
-    if(isDelete)
+    else
     {
-        queryCondition['isDelete'] = isDelete;
+        let queryCondition = {}; 
+        queryCondition['lastStatus'] !=-1;
+        Order.countDocuments(queryCondition, (err, count)=>{
+            if(err){
+                res.status(500).send({
+                    success: false,
+                    error: err
+                });
+            }else {
+                res.send({
+                    success: true,
+                    count: count, 
+                });
+            }
+        })
     }
-    Order.countDocuments(queryCondition, (err, count)=>{
-        Order.find(queryCondition)
-            .sort({"orderNumber":-1})
-            .limit(limit)
-            .skip(skip)
-            .exec((err, orders)=>{
-                if(err){
-                    res.send({
-                        success: false,
-                        error: err
-                    });
-                }else {
-                    res.send({
-                        success: true,
-                        list: orders,
-                        pagination: {
-                            total: count,
-                            current:parseInt(currentPage) 
-                        }
-                    });
-                }
-            });
-    });
+});
+
+//最近7日订单数统计(不包括已取消的)
+router.get('/OrdersGroupByCreateDate', function(req, res, next) {
+    if(!auth.isAdminAuth(req))
+    {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        var startdate=moment().subtract(7, 'days').format('YYYY-MM-DD');
+        Order.aggregate(
+            [{$match : {createdateStr:{$gte:startdate},lastStatus:{$ne:-1}}},
+            {$group:{_id :"$createdateStr" ,count:{$sum:1}}}]
+        ).exec(function(err,result){
+            if(err){
+                res.status(500).send({
+                    success: false,
+                    error: err
+                });
+            }else {
+                res.send({
+                    success: true,
+                    result: result, 
+                });
+            }
+         });
+    }
 });
 
 module.exports=router;

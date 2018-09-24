@@ -33,7 +33,7 @@ router.post('/AddUser', function(req, res, next) {
             }  
             else
             {
-                res.send({
+                res.status(500).send({
                     success: false,
                     error: err
                 });
@@ -110,7 +110,7 @@ router.post('/UserLogout',function (req, res, next) {
 	}
 });
 
-//修改管理员密码
+//修改管理员
 router.put('/UpdateUser/:userId', function(req, res, next) {
   if(!auth.isAdminAuth(req))
   {
@@ -131,7 +131,7 @@ router.put('/UpdateUser/:userId', function(req, res, next) {
     let newUser = Object.assign({}, user);
     User.findOneAndUpdate({_id:userId}, newUser, {new: true}, (err, user)=>{
         if(err){
-            res.send({
+            res.status(500).send({
                 success: false,
                 error: err
             });
@@ -167,17 +167,46 @@ router.delete('/DeleteUser/:userId', function(req, res, next) {
     let userId = req.params.userId;
     User.remove({_id: userId}, (err)=>{
         if (err) {
-            res.send({
+            res.status(500).send({
                 success: false,
                 error: err
             });
         } else {
             res.send({
-                success: true
+                success: true,
+                userId:userId
             });
         }
     });
   }
+});
+
+//批量删除管理员
+router.delete('/BatchDeleteUser', function(req, res, next) {
+    if(!auth.isAdminAuth(req))
+    {
+        res.status(401).send({
+            success: false,
+            code: errorcodes.NO_LOGIN
+        });
+    }
+    else
+    {
+        let userIds = req.body.userIds;
+        User.remove({_id: {$in:userIds}}, (err)=>{
+            if (err) {
+                res.status(500).send({
+                    success: false,
+                    error: err
+                });
+            } else {
+                res.send({
+                    success: true,
+                    userIds:userIds
+                });
+            }
+        });
+    }
 });
 
 //分页查询管理员
@@ -191,21 +220,40 @@ router.get('/UsersByPage', function(req, res, next) {
     }
     else
     {
-        let {currentPage,username,pageSize}=req.query;
+        let {currentPage,username,pageSize,sorter}=req.query;
         let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
         let skip = (currentPage - 1) * limit;
         let queryCondition = {}; 
+        let sortCondition = {};
         if(username){
             queryCondition['username'] = new RegExp(username);
         }
+        if(sorter)
+        {
+            let sortField=utils.getSortField(sorter);
+            let sortType=utils.getSortType(sorter);
+            switch(sortField)
+            {
+                case "username": //账户名排序
+                Object.assign(sortCondition,{"username":sortType});    
+                break;
+                case "updated": //更新时间排序
+                Object.assign(sortCondition,{"updated":sortType});    
+                break;
+            }
+        }
+        else
+        {
+            Object.assign(sortCondition,{"updated":-1}); // 默认按更新时间倒序    
+        }
         User.countDocuments(queryCondition, (err, count)=>{
           User.find(queryCondition)
-                // .sort(sortCondition)
+                .sort(sortCondition)
                 .limit(limit)
                 .skip(skip)
                 .exec((err, users)=>{
                     if(err){
-                        res.send({
+                        res.status(500).send({
                             success: false,
                             error: err
                         });
