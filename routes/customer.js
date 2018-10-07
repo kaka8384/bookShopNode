@@ -40,6 +40,7 @@ router.post('/CustomerRegister', function(req, res, next) {
             res.send({
                 success: true,
                 userInfo:{
+                    userId:_id,
                     username: customer['username'],
                     authToken: authToken
                 }
@@ -82,6 +83,7 @@ router.post('/CustomerLogin',function (req, res, next) {
                 res.send({
                     success: true,
                     userInfo:{
+                        userId:_id,
                         username: userInfo['username'],
                         authToken:authToken,
                     }
@@ -152,6 +154,61 @@ router.put('/UpdateCustomer/:customerId', function(req, res, next) {
         });
     }
 });
+
+//查询当前登录网站用户
+router.get('/CurrentCustomer/:customerId', function(req, res, next) {
+    // if(!auth.isAuth(req))  //如果没有登录信息
+    // {
+    //     res.status(401).send({
+    //         success: false,
+    //         code: errorcodes.NO_LOGIN
+    //     });
+    // }
+    // else
+    // {
+        let userId = req.params.customerId;
+        Customer.findByCustomerId(userId, function(err, userList){
+            if(err){
+                res.send({
+                    error:err
+                });
+            }
+            if(userList.length==0){
+                //用户不存在
+                res.send({
+                    success: false,
+                    code: errorcodes.USERNAME_NOTEXIST 
+                });
+            }else {
+                if(userList[0]['isActive']==false)
+                {
+                    res.send({
+                        success: false,
+                        code: errorcodes.CUSTOMER_NOACTIVE
+                    });
+                }
+                else {
+                    let user=userList[0];
+                    res.send({
+                        success: true,
+                        username: user.username,
+                        userid:user._id,
+                        mobile:user.mobile,
+                        nickname:user.nickname,
+                        gender:user.gender,
+                        headImg:user.headImg 
+                    });
+                }
+            }
+        });
+    // }
+  });
+
+//查询网站用户是否登录
+// router.get('/IsLogin', function(req, res, next) {
+//     return auth.isAuth(req);
+// });
+
 
 //网站用户注销(禁用)
 router.put('/CancelCustomer/:customerId', function(req, res, next) {

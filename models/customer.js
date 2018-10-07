@@ -22,7 +22,7 @@ customerSchema.statics.findByCustomerId=function(customerId, cb){
 };
 
 customerSchema.statics.findByUserName=function(username, cb){
-    return this.find({username:new RegExp(username, 'i')}, cb);
+    return this.find({username:username}, cb);
 };
 
 module.exports = mongoose.model('Customer', customerSchema);

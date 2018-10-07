@@ -264,7 +264,9 @@ router.get('/OrdersGroupByCreateDate', function(req, res, next) {
         var startdate=moment().subtract(7, 'days').format('YYYY-MM-DD');
         Order.aggregate(
             [{$match : {createdateStr:{$gte:startdate},lastStatus:{$ne:-1}}},
-            {$group:{_id :"$createdateStr" ,count:{$sum:1}}}]
+       
+            {$group:{_id:"$createdateStr" ,y:{$sum:1}}},
+            {$project:{x:"$_id",y:"$y"}}]
         ).exec(function(err,result){
             if(err){
                 res.status(500).send({
