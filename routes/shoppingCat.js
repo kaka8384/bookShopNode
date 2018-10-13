@@ -7,15 +7,15 @@ let auth=require('../utils/auth');
 
 //加入到购物车
 router.post('/AddShoppingCat', function(req, res, next) {
-    if(!auth.isAuth(req))
-    {
-        res.send({
-            success: false,
-            code: errorcodes.NO_LOGIN
-        });
-    }
-    else
-    {
+    // if(!auth.isAuth(req))
+    // {
+    //     res.send({
+    //         success: false,
+    //         code: errorcodes.NO_LOGIN
+    //     });
+    // }    // else
+    // {
+
         let shoppingcat = req.body;
         let isExistCat=false; //是否已存在某个用户的购物车
         ShoppingCat.findByCustomerId(shoppingcat.customerId,function(err, catList){
@@ -55,9 +55,9 @@ router.post('/AddShoppingCat', function(req, res, next) {
                         return n.productId.toString()===shoppingcat.products.productId.toString();
                     }
                 );
-                if(index!==-1)  //购物车存在相同商品，则购买数+1
+                if(index!==-1)  //购物车存在相同商品，则购买数+
                 {
-                    catList[0].products[index].buyCount+=1;
+                    catList[0].products[index].buyCount+=shoppingcat.products.buyCount;
                 }
                 else  //购物车不存在相同商品，新增商品
                 {
@@ -79,7 +79,7 @@ router.post('/AddShoppingCat', function(req, res, next) {
                 });
             }
         });
-    }
+    // }
 });
 
 //从购物车中删除商品

@@ -125,7 +125,7 @@ router.delete('/BatchDeleteProduct', function(req, res, next) {
 //分页查询产品
 //param:queryType(查询类型 1.网站查询 2.后台查询)
 router.get('/ProductByPage', function(req, res, next) {
-    let {currentPage,name,descption,author,publisher,inventory,publicationTime_S,publicationTime_E,minPrice,maxPrice,pageSize,isActive,sorter,queryType=1}=req.query;
+    let {currentPage,categoryId,name,descption,author,publisher,inventory,publicationTime_S,publicationTime_E,minPrice,maxPrice,pageSize,isActive,sorter,queryType=1}=req.query;
     if(queryType===2&&!auth.isAdminAuth(req))
     {
         res.status(401).send({
@@ -139,6 +139,10 @@ router.get('/ProductByPage', function(req, res, next) {
         let skip = (currentPage - 1) * limit;
         let queryCondition = {}; 
         let sortCondition = {};
+        if(categoryId)
+        {
+            queryCondition['categoryId'] =categoryId;
+        }
         if(name){
             queryCondition['name'] = new RegExp(name);
         }
@@ -177,7 +181,7 @@ router.get('/ProductByPage', function(req, res, next) {
             let sortType=utils.getSortType(sorter);
             switch(sortField)
             {
-                case "price.$numberDecimal": //价格排序
+                case "price": //价格排序
                 Object.assign(sortCondition,{"price":sortType});    
                 break;
                 case "salesCount": //销量排序
