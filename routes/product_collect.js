@@ -9,58 +9,61 @@ let utils=require('../utils/utils');
 
 //添加收藏
 router.post('/AddProductCollect', function(req, res, next) {
-    if(!auth.isAuth(req))
-    {
-        res.send({
-            success: false,
-            code: errorcodes.NO_LOGIN
-        });
-    }
-    else
-    {
-        let currentUser = req.session.userInfo; //当前登录用户信息
         let collect = req.body;
-        var newModel=new Product_Collect(collect);
-        newModel.customerId=currentUser._id; //赋值收藏用户
-        newModel.save().then(function(collect){
-            res.send({
-                success: true,
-                collect: collect
-            });
-     
-        }).error(function(err){
-            res.status(500).send({
-                success: false,
-                error: err
-            });
-        });
-    }
+        Product_Collect.find({"customerId":collect.customerId,"product.productId":collect.product.productId})
+        .exec().then(function(obj){
+            if(obj.length>0) //商品已收藏
+            {
+                res.send({
+                    success: false,
+                    code:errorcodes.PRODUCT_COLLECTION_EXIST
+                });
+            }
+            else
+            {
+                var newModel=new Product_Collect(collect);
+                newModel.save().then(function(collect){
+                    res.send({
+                        success: true,
+                        collect: collect
+                    });
+             
+                }).error(function(err){
+                    res.status(500).send({
+                        success: false,
+                        error: err
+                    });
+                });
+            }
+        })
+
+    // }
 });
 
 //删除收藏
 router.delete('/DeleteProductCollect/:collectId', function(req, res, next) {
-    if(!auth.isAuth(req))
-    {
-        res.send({
-            success: false,
-            code: errorcodes.NO_LOGIN
-        });
-    }
-    else
-    {
-        let currentUser = req.session.userInfo;
+    // if(!auth.isAuth(req))
+    // {
+    //     res.send({
+    //         success: false,
+    //         code: errorcodes.NO_LOGIN
+    //     });
+    // }
+    // else
+    // {
+        // let currentUser = req.session.userInfo;
         let collectId = req.params.collectId;
-        let collect = req.body;
+        // let collect = req.body;
         //  非管理员删除时判断该提问是否为自己提的
-        if(!currentUser||currentUser._id!==collect.customerId)
-        {
-            res.send({
-                success: false,
-                code:errorcodes.NO_DATA_PERMISSION
-            });
-        }
-        else
-        {
+        // if(!currentUser||currentUser._id!==collect.customerId)
+        // {
+        //     res.send({
+        //         success: false,
+        //         code:errorcodes.NO_DATA_PERMISSION
+        //     });
+        // }
+        // else
+        // {
             Product_Collect.findByCollectId(collectId).exec().then(function(collect){
                 if(collect.length<=0) //收藏不存在
                 {
@@ -85,8 +88,8 @@ router.delete('/DeleteProductCollect/:collectId', function(req, res, next) {
                     });
                 }
             })
-        }
-    }
+        // }
+    // }
 });
 
 //批量删除收藏

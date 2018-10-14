@@ -8,6 +8,7 @@ let commentSchema = new Schema({
     productName: {  type: String, required: true,trim:true }, //商品名称
     customerId: { type: Schema.Types.ObjectId, required: true}, //客户ID
     customerName:{ type: String, trim:true },//客户昵称
+    customerHeadImg:{ type: String },//客户头像
     orderId: { type: Schema.Types.ObjectId, required: true}, //订单ID
     orderNumber: { type: String, required: true}, //订单编号
     commentCotent: { type: String, required: true,maxlength:200}, //评论内容
