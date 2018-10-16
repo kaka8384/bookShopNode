@@ -84,15 +84,15 @@ router.post('/AddShoppingCat', function(req, res, next) {
 
 //从购物车中删除商品
 router.post('/DeleteShoppingCat', function(req, res, next) {
-    if(!auth.isAuth(req))
-    {
-        res.send({
-            success: false,
-            code: errorcodes.NO_LOGIN
-        });
-    }
-    else
-    {
+    // if(!auth.isAuth(req))
+    // {
+    //     res.send({
+    //         success: false,
+    //         code: errorcodes.NO_LOGIN
+    //     });
+    // }
+    // else
+    // {
         let shoppingcat = req.body;
         ShoppingCat.findByCustomerId(shoppingcat.customerId,function(err, catList){
             if(err){
@@ -143,7 +143,7 @@ router.post('/DeleteShoppingCat', function(req, res, next) {
                 }
             }
         });
-    }
+    // }
 });
 
 //清空购物车
@@ -198,15 +198,15 @@ router.post('/ClearShoppingCat', function(req, res, next) {
 
 //修改购物车商品数量
 router.post('/UpdateBuyCount', function(req, res, next) {
-    if(!auth.isAuth(req))
-    {
-        res.send({
-            success: false,
-            code: errorcodes.NO_LOGIN
-        });
-    }
-    else
-    {
+    // if(!auth.isAuth(req))
+    // {
+    //     res.send({
+    //         success: false,
+    //         code: errorcodes.NO_LOGIN
+    //     });
+    // }
+    // else
+    // {
         let shoppingcat = req.body;
         ShoppingCat.findByCustomerId(shoppingcat.customerId,function(err, catList){
             if(err){
@@ -257,7 +257,7 @@ router.post('/UpdateBuyCount', function(req, res, next) {
                 }
             }
         });
-    }
+    // }
 });
 
 //查询购物车
