@@ -16,7 +16,7 @@ var statusSchema = new Schema({
 }, {_id: false});
 
 var addressSchema = new Schema({
-    shippingAddressId: { type: Schema.Types.ObjectId, required: true}, //收货地址ID
+    // shippingAddressId: { type: Schema.Types.ObjectId, required: true}, //收货地址ID
     name:{ type: String, required: true,trim:true }, //收货人姓名
     province:{ type: String, required: true}, //省
     city:{ type: String, required: true},     //市

@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 let Product_Collect=require('../models/product_collect');
+let Product=require('../models/product');
 let moment=require('moment');
 let constants=require('../constants/constants');
 let errorcodes=require('../constants/errorCodes');
@@ -23,6 +24,7 @@ router.post('/AddProductCollect', function(req, res, next) {
             {
                 var newModel=new Product_Collect(collect);
                 newModel.save().then(function(collect){
+                    _updateProductCollectCount(collect.product.productId,1);
                     res.send({
                         success: true,
                         collect: collect
@@ -75,6 +77,7 @@ router.delete('/DeleteProductCollect/:collectId', function(req, res, next) {
                 else
                 {
                     Product_Collect.remove({_id: collect[0]._id}).then(function(){
+                        _updateProductCollectCount(collect[0].product.productId,-1);  //减少收藏数
                         res.send({
                             success: true,
                             collectId:collectId
@@ -187,5 +190,13 @@ router.get('/Product_IssueByPage', function(req, res, next) {
     }
    
 });
+
+//修改商品的收藏次数
+function _updateProductCollectCount(productId,incCount)
+{
+    var update={$set:{"updated":moment().format()},$inc:{"collectCount":incCount}};
+    Product.findOneAndUpdate({_id:productId,collectCount:{$gte:0}}, update, {new: true}, (err, product)=>{
+    });
+}
 
 module.exports = router;

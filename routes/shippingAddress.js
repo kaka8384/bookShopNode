@@ -178,18 +178,18 @@ router.put('/SetDefaultAddress/:addressId', function(req, res, next) {
 });
 
 //查询我的地址
-router.get('/QueryAddress', function(req, res, next) {
-    if(!auth.isAuth(req))
-    {
-        res.send({
-            success: false,
-            code: errorcodes.NO_LOGIN
-        });
-    }
-    else
-    {
-        let currentUser = req.session.userInfo;
-        ShippingAddress.findByCustomerId(currentUser._id,function(err, addressList){
+router.get('/QueryAddress/:customerId', function(req, res, next) {
+    // if(!auth.isAuth(req))
+    // {
+    //     res.send({
+    //         success: false,
+    //         code: errorcodes.NO_LOGIN
+    //     });
+    // }
+    // else
+    // {
+        let customerId = req.params.customerId;
+        ShippingAddress.findByCustomerId(customerId,function(err, addressList){
             if(err){
                 res.send({
                     success: false,
@@ -204,6 +204,6 @@ router.get('/QueryAddress', function(req, res, next) {
                 });
             }
         });
-    }
+    // }
 });
 module.exports = router;

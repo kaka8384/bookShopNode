@@ -11,19 +11,19 @@ let utils=require('../utils/utils');
 
 //新建评论
 router.post('/AddProductComment', function(req, res, next) {
-    if(!auth.isAuth(req))
-    {
-        res.send({
-            success: false,
-            code: errorcodes.NO_LOGIN
-        });
-    }
-    else
-    {
-        let currentUser = req.session.userInfo;
+    // if(!auth.isAuth(req))
+    // {
+    //     res.send({
+    //         success: false,
+    //         code: errorcodes.NO_LOGIN
+    //     });
+    // }
+    // else
+    // {
+        // let currentUser = req.session.userInfo;
         let comment = req.body;
         var newModel=new Product_Comment(comment);
-        newModel.customerId==currentUser._id;
+        // newModel.customerId==currentUser._id;
         newModel.save().then(function(comment){
             _updateOrderCommentCount(comment.productId,1);
             _updateOrderCommentStatus(comment,true);
@@ -38,7 +38,7 @@ router.post('/AddProductComment', function(req, res, next) {
                 error: err
             });
         });
-    }
+    // }
 });
 
 //修改评论

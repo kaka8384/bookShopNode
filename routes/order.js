@@ -34,15 +34,15 @@ function _getSequence(sequenceType)
 
 //生成订单
 router.post('/CreateOrder', function(req, res, next) {
-    if(!auth.isAuth(req))
-    {
-        res.send({
-            success: false,
-            code: errorcodes.NO_LOGIN
-        });
-    }
-    else
-    {
+    // if(!auth.isAuth(req))
+    // {
+    //     res.send({
+    //         success: false,
+    //         code: errorcodes.NO_LOGIN
+    //     });
+    // }
+    // else
+    // {
         let order = req.body;
         var sequenceType='Order_Sequence_'+moment().format('YYYYMMDD'); 
         var sequenceResult=_getSequence(sequenceType); //获取生成订单需要的序号
@@ -67,12 +67,13 @@ router.post('/CreateOrder', function(req, res, next) {
           });
         })
         .error(function(error){console.log(error)});
-    }
+    // }
 });
 
 //修改订单状态
 router.put('/UpdateOrder/:orderId', function(req, res, next) {
-    if(!auth.isAuth(req)&&!auth.isAdminAuth(req))
+    let reqbody = req.body;
+    if(!reqbody.isFront&&!auth.isAdminAuth(req))
     {
         res.send({
             success: false,
@@ -82,7 +83,7 @@ router.put('/UpdateOrder/:orderId', function(req, res, next) {
     else
     {
         let orderId = req.params.orderId;
-        let status = req.body.status;
+        let status = reqbody.status;
         var update={$set:{"updated":moment().format(),"lastStatus":status}};
         if(status)
         {
@@ -219,6 +220,25 @@ router.get('/OrdersByPage', function(req, res, next) {
                 });
         });
     }
+});
+
+//查询单个订单
+router.get('/OrderQuery/:orderId', function(req, res, next) {
+    let orderId = req.params.orderId;
+    Order.findByOrderId(orderId,function(err, order){
+        if(err){
+            res.status(500).send({
+                error:err
+            });
+        }
+        else
+        {
+            res.send({
+                success: true,
+                order:order
+            });
+        }
+    })
 });
 
 //订单总数统计(不包括已取消的)
