@@ -195,7 +195,12 @@ router.get('/Product_CollectByPage', function(req, res, next) {
 function _updateProductCollectCount(productId,incCount)
 {
     var update={$set:{"updated":moment().format()},$inc:{"collectCount":incCount}};
-    Product.findOneAndUpdate({_id:productId,collectCount:{$gte:0}}, update, {new: true}, (err, product)=>{
+    var queryCondition={_id:productId,collectCount:{$gte:0}};
+    if(incCount<0)
+    {
+        queryCondition={_id:productId,collectCount:{$gt:0}};
+    }
+    Product.findOneAndUpdate(queryCondition, update, {new: true}, (err, product)=>{
     });
 }
 

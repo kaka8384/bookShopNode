@@ -270,7 +270,12 @@ router.get('/Product_CommentByPage', function(req, res, next) {
 function _updateOrderCommentCount(productId,incCount)
 {
     var update={$set:{"updated":moment().format()},$inc:{"commentCount":incCount}};
-    Product.findOneAndUpdate({_id:productId,commentCount:{$gte:0}}, update, {new: true}, (err, product)=>{
+    var queryCondition={_id:productId,commentCount:{$gte:0}};
+    if(incCount<0)
+    {
+        queryCondition={_id:productId,commentCount:{$gt:0}};
+    }
+    Product.findOneAndUpdate(queryCondition, update, {new: true}, (err, product)=>{
     });
 }
 
