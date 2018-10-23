@@ -71,7 +71,7 @@ router.delete('/DeleteProductCollect/:collectId', function(req, res, next) {
                 {
                     res.send({
                         success: false,
-                        code:errorcodes.ISSUE_NOTEXIST
+                        code:errorcodes.COLLECTION_NOTEXIST
                     });
                 }
                 else
@@ -125,17 +125,17 @@ router.delete('/BatchDeleteProductCollect', function(req, res, next) {
 });
 
 //分页查询我的收藏
-router.get('/Product_IssueByPage', function(req, res, next) {
+router.get('/Product_CollectByPage', function(req, res, next) {
     let {currentPage,productName,customerId,pageSize,sorter}=req.query;
-    if(auth.isAuth(req))
-    {
-        res.status(401).send({
-            success: false,
-            code: errorcodes.NO_LOGIN
-        });
-    }
-    else
-    {
+    // if(auth.isAuth(req))
+    // {
+    //     res.status(401).send({
+    //         success: false,
+    //         code: errorcodes.NO_LOGIN
+    //     });
+    // }
+    // else
+    // {
         let limit = pageSize?parseInt(pageSize):constants.PAGE_SIZE;
         let skip = (currentPage - 1) * limit;
         let queryCondition = {}; 
@@ -169,7 +169,7 @@ router.get('/Product_IssueByPage', function(req, res, next) {
                 .sort(sortCondition)
                 .limit(limit)
                 .skip(skip)
-                .exec((err, issue)=>{
+                .exec((err, collets)=>{
                     if(err){
                         res.status(500).send({
                             success: false,
@@ -178,7 +178,7 @@ router.get('/Product_IssueByPage', function(req, res, next) {
                     }else {
                         res.send({
                             success: true,
-                            list: issue,
+                            list: collets,
                             pagination: {
                                 total: count,
                                 current: parseInt(currentPage)
@@ -187,7 +187,7 @@ router.get('/Product_IssueByPage', function(req, res, next) {
                     }
                 });
         });
-    }
+    // }
    
 });
 
