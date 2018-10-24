@@ -35,4 +35,23 @@ router.post('/UploadImg', multipart(), function (req, res) {
 
   });
 
+router.post('/UploadHeadImg', multipart(), function (req, res) {
+
+    var filePath=req.files.file.path;
+    //获得文件名
+    var filename = req.files.file.originalFilename || path.basename(filePath);
+
+    //复制文件到指定路径
+    var targetPath = './public/head/' + filename;
+
+    //复制文件流
+    fs.createReadStream(filePath).pipe(fs.createWriteStream(targetPath));
+
+    //响应ajax请求，告诉它图片传到哪了
+    res.send({
+        success: true,
+        url: 'http://' + req.headers.host + '/head/' + filename
+    });
+  });
+
 module.exports = router;

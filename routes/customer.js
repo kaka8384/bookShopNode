@@ -114,15 +114,6 @@ router.post('/CustomerLogout',function (req, res, next) {
 
 //网站用户信息修改
 router.put('/UpdateCustomer/:customerId', function(req, res, next) {
-    if(!auth.isAuth(req))
-    {
-        res.send({
-            success: false,
-            code: errorcodes.NO_LOGIN
-        });
-    }
-    else
-    {
         let customerId = req.params.customerId;
         let customer = req.body;
         if(customer.password)
@@ -152,20 +143,45 @@ router.put('/UpdateCustomer/:customerId', function(req, res, next) {
                 });
             }
         });
-    }
+});
+
+//网站用户密码修改
+router.put('/UpdatePassword/:customerId', function(req, res, next) {
+    let customerId = req.params.customerId;
+    let customer = req.body;
+    let oldpassword=md5(customer.oldpassword);
+    // customer.newpassword=md5(newpassword.password);  //修改密码
+    // customer.updated=moment().format();
+    let newCustomer = {
+        password:md5(customer.newpassword),
+        updated:moment().format()
+    } //新修改对象
+    Customer.findOneAndUpdate({_id:customerId,password:oldpassword}, newCustomer, {new: true},
+         (err, customer)=>{
+        if(err){
+            res.send({
+                success: false,
+                error: err
+            });
+        }
+        else if(customer==null)  //老密码错误
+        {
+            res.send({
+                success: false,
+                code: errorcodes.OLDPASSWORD_ERROR 
+            });
+        }
+        else {
+            res.send({
+                success: true,
+                customer: customer
+            });
+        }
+    });
 });
 
 //查询当前登录网站用户
 router.get('/CurrentCustomer/:customerId', function(req, res, next) {
-    // if(!auth.isAuth(req))  //如果没有登录信息
-    // {
-    //     res.status(401).send({
-    //         success: false,
-    //         code: errorcodes.NO_LOGIN
-    //     });
-    // }
-    // else
-    // {
         let userId = req.params.customerId;
         Customer.findByCustomerId(userId, function(err, userList){
             if(err){
@@ -196,12 +212,13 @@ router.get('/CurrentCustomer/:customerId', function(req, res, next) {
                         mobile:user.mobile,
                         nickname:user.nickname,
                         gender:user.gender,
-                        headImg:user.headImg 
+                        headImg:user.headImg ,
+                        brithDay:user.brithDay,
+                        mail:user.mail
                     });
                 }
             }
         });
-    // }
   });
 
 //查询网站用户是否登录

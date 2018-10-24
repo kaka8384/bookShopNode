@@ -9,15 +9,15 @@ let errorcodes=require('../constants/errorCodes');
 
 //添加地址
 router.post('/AddAddress', function(req, res, next) {
-    if(!auth.isAuth(req))
-    {
-        res.status(401).send({
-            success: false,
-            code: errorcodes.NO_LOGIN
-        });
-    }
-    else
-    {
+    // if(!auth.isAuth(req))
+    // {
+    //     res.status(401).send({
+    //         success: false,
+    //         code: errorcodes.NO_LOGIN
+    //     });
+    // }
+    // else
+    // {
         let currentUser = req.session.userInfo; //当前登录用户信息
         let address = req.body;
         var newModel=new ShippingAddress(address);
@@ -35,20 +35,20 @@ router.post('/AddAddress', function(req, res, next) {
                 });
             }
         });
-    }
+    // }
 });
 
 //修改地址
 router.put('/UpdateAddress/:addressId', function(req, res, next) {
-    if(!auth.isAuth(req))
-    {
-        res.status(401).send({
-            success: false,
-            code: errorcodes.NO_LOGIN
-        });
-    }
-    else
-    {
+    // if(!auth.isAuth(req))
+    // {
+    //     res.status(401).send({
+    //         success: false,
+    //         code: errorcodes.NO_LOGIN
+    //     });
+    // }
+    // else
+    // {
         let currentUser = req.session.userInfo;
         let addressId = req.params.addressId;
         let address = req.body;
@@ -77,20 +77,20 @@ router.put('/UpdateAddress/:addressId', function(req, res, next) {
                 }
             });
         }
-    }
+    // }
 });
 
 //删除地址
 router.delete('/DeleteAddress/:addressId', function(req, res, next) {
-    if(!auth.isAuth(req))
-    {
-        res.send({
-            success: false,
-            code: errorcodes.NO_LOGIN
-        });
-    }
-    else
-    {
+    // if(!auth.isAuth(req))
+    // {
+    //     res.send({
+    //         success: false,
+    //         code: errorcodes.NO_LOGIN
+    //     });
+    // }
+    // else
+    // {
         let currentUser = req.session.userInfo;
         let addressId = req.params.addressId;
         let address = req.body;
@@ -128,7 +128,7 @@ router.delete('/DeleteAddress/:addressId', function(req, res, next) {
                 }
             })
         }
-    }
+    // }
 });
 
 //设置默认地址
