@@ -15,4 +15,5 @@ ErrorCode.NO_LOGIN=10010;  //用户未登录
 ErrorCode.PRODUCT_COLLECTION_EXIST=10011;  //商品已收藏
 ErrorCode.COLLECTION_NOTEXIST=10012; //收藏不存在
 ErrorCode.OLDPASSWORD_ERROR= 10013; //用户老密码错误
+ErrorCode.ADDRESS_NOTEXIST=10014; //收件地址不存在
 module.exports =ErrorCode;
