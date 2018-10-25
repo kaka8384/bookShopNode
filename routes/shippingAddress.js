@@ -142,8 +142,8 @@ router.get('/QueryAddress/:customerId', function(req, res, next) {
 });
 
 //查询省份
-router.get('/QueryProvince/', function(req, res, next) {
-    var province=cityData.cityJson.filter(function(item){
+router.get('/QueryProvince', function(req, res, next) {
+    var province=cityData.filter(function(item){
         return item.item_code.substr(2,4)=="0000";
     });
     if(!!province)
@@ -159,7 +159,7 @@ router.get('/QueryProvince/', function(req, res, next) {
 router.get('/QueryCity/:province', function(req, res, next) {
     var province=req.params.province;
     var provinceStart= province.substr(0,2);
-    var city=cityData.cityJson.filter(function(item){
+    var city=cityData.filter(function(item){
         return item.item_code!=province
         &&item.item_code.substr(0,2)==provinceStart
         &&item.item_code.substr(4,2)=="00";
@@ -176,8 +176,8 @@ router.get('/QueryCity/:province', function(req, res, next) {
 //查询区
 router.get('/QueryDistrict/:city', function(req, res, next) {
     var city=req.params.city;
-    var cityStart= province.substr(0,4);
-    var district=cityData.cityJson.filter(function(item){
+    var cityStart= city.substr(0,4);
+    var district=cityData.filter(function(item){
         return item.item_code!=district
         &&item.item_code.substr(0,4)==cityStart;
     });
