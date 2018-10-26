@@ -93,27 +93,27 @@ router.delete('/DeleteProductComment/:commentId', function(req, res, next) {
             code: errorcodes.NO_LOGIN
         });
     }
-    else if(!comment.isAdmin&&!auth.isAuth(req))
-    {
-        res.status(401).send({
-            success: false,
-            code: errorcodes.NO_LOGIN
-        });
-    }
+    // else if(!comment.isAdmin&&!auth.isAuth(req))
+    // {
+    //     res.status(401).send({
+    //         success: false,
+    //         code: errorcodes.NO_LOGIN
+    //     });
+    // }
     else
     {
-        let currentUser = req.session.userInfo;
+        // let currentUser = req.session.userInfo;
         let commentId = req.params.commentId;
         //  非管理员删除时判断该提问是否为自己提的
-        if(!comment.isAdmin&&(!currentUser||currentUser._id!==comment.customerId))
-        {
-            res.send({
-                success: false,
-                code:errorcodes.NO_DATA_PERMISSION
-            });
-        }
-        else
-        {
+        // if(!comment.isAdmin&&(!currentUser||currentUser._id!==comment.customerId))
+        // {
+        //     res.send({
+        //         success: false,
+        //         code:errorcodes.NO_DATA_PERMISSION
+        //     });
+        // }
+        // else
+        // {
             Product_Comment.findByCommentId(commentId).exec().then(function(comment){
                 if(comment.length<=0) //评论不存在
                 {
@@ -134,14 +134,14 @@ router.delete('/DeleteProductComment/:commentId', function(req, res, next) {
                     })
                     .error(function(err){
                         res.status(500).send({
-                                    success: false,
-                                    error: err
-                                });
+                            success: false,
+                            error: err
+                        });
                     });
                 }
             })
       
-        }
+        // }
     }
 });
 
