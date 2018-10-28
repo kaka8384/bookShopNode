@@ -29,7 +29,7 @@ router.post('/UploadImg', multipart(), function (req, res) {
         //响应ajax请求，告诉它图片传到哪了
         res.send({
             success: true,
-            url: 'http://' + req.headers.host + '/uploads/' + filename
+            url: 'http://' + req.headers.host + '/uploads//' + filename
         });
     }
 

@@ -11,16 +11,6 @@ let utils=require('../utils/utils');
 
 //新建评论
 router.post('/AddProductComment', function(req, res, next) {
-    // if(!auth.isAuth(req))
-    // {
-    //     res.send({
-    //         success: false,
-    //         code: errorcodes.NO_LOGIN
-    //     });
-    // }
-    // else
-    // {
-        // let currentUser = req.session.userInfo;
         let comment = req.body;
         var newModel=new Product_Comment(comment);
         // newModel.customerId==currentUser._id;
